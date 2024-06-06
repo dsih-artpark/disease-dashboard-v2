@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+  <head>
+    <title>{{tenant.dashboard_title}}</title>
+
+    {% include("components/common_head.html") %}
+    <style>
+      {% include("components/common_style.css") %}
+
+      main {
+        display: grid;
+        grid-gap: 1rem;
+        grid-template-columns: 66vh 1fr;
+        padding: 1rem max(2rem, calc(50vw - 640px));
+      }
+
+      .component-card {
+        box-shadow: 0px 0px 2px 0px rgba(0, 0, 0, 0.08), 0px 1px 4px 0px rgba(69, 75, 87, 0.12), 0px 0px 0px 1px rgba(152, 161, 178, 0.10);
+        padding: 1rem;
+        border-radius: 0.75rem;
+        background: var(--bg2);
+        place-self: stretch;
+      }
+    </style>
+    <script>
+      const csrfToken = "{{csrf_token()}}";
+      const onDataLoad = [];
+      async function loadData() {
+        const response = await fetch("/api/data/query", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken,
+          },
+          body: JSON.stringify({
+            region_id: "state_29",
+            start_date: "2024-02-01",
+            end_date: "2024-02-29",
+            aggregates: [
+              "summary",
+              "subregionwise_distribution",
+              "demographic_distributions",
+              "trends",
+            ],
+          }),
+        });
+        const data = await response.json();
+        console.debug(data);
+      }
+      window.addEventListener("load", loadData);
+    </script>
+  </head>
+  <body>
+    {% include("components/header.html") %}
+    <main>
+      <!-- -->
+      {% include("components/map.html") %}
+      <!-- -->
+      {% include("components/summary.html") %}
+      <!-- -->
+      {% include("components/demographic_distributions.html") %}
+      <!-- -->
+      {% include("components/subregionwise_distribution.html") %}
+      <!-- -->
+      {% include("components/trends.html") %}
+    </main>
+  </body>
+</html>

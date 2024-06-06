@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+  <head>
+    <title>{{tenant.dashboard_title}}</title>
+
+    {% include("components/common_head.html") %}
+    <style>
+      {% include("components/common_style.css") %}
+
+      body {
+        text-align: center;
+        display: grid;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+      }
+
+      a  {
+        display: inline-grid;
+        grid-gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        text-decoration: none;
+        align-items: center;
+        color: inherit;
+        border: 1px solid var(--f1);
+        grid-template-columns: auto auto;
+        border-radius: 0.75rem;
+        background: var(--bg2);
+      }
+    </style>
+  </head>
+  <body>
+    <a href="/start-google-auth">
+      <img src="/static/google-login-button.svg" />
+      <span>Login With Google</span>
+    </a>
+  </body>
+</html>
