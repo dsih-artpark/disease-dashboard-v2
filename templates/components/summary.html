@@ -1,6 +1,67 @@
 <style>
   .component-card.summary {
-    grid-area: 1 / 2 / 2 / 3;
+    grid-area: summary;
+    display: flex;
+    gap: 0.5rem;
+    align-items: stretch;
+  }
+
+  .summary-card {
+    flex-basis: 100%;
+    display: inline-flex;
+    flex-direction: column;
+    background: var(--bg-shaded);
+    padding: 0.5rem;
+    border-radius: 0.4375rem;
+    grid-gap: 0.25rem;
+  }
+
+  .summary-card.hidden {
+    display: none;
+  }
+
+  .summary-card b {
+    font-size: 0.6rem;
+    color: var(--f2);
+  }
+
+  .summary-card .number {
+    font-weight: 600;
+    font-size: 1.2rem;
   }
 </style>
-<div class="component-card summary">Summary</div>
+<div class="component-card summary">
+  <div class="summary-card suspected">
+    <b>SUSPECTED</b>
+    <span class="number">&#x27F3;</span>
+  </div>
+  <div class="summary-card tested">
+    <b>TESTED</b>
+    <span class="number">&#x27F3;</span>
+  </div>
+  <div class="summary-card confirmed">
+    <b>CONFIRMED</b>
+    <span class="number">&#x27F3;</span>
+  </div>
+  <div class="summary-card deaths">
+    <b>DEATHS</b>
+    <span class="number">&#x27F3;</span>
+  </div>
+</div>
+<script>
+  function renderSummary() {
+    const summary = data.summary;
+    const stages = ["suspected", "tested", "confirmed", "deaths"];
+
+    stages.forEach((stage) => {
+      const card = d3.select(`.summary-card.${stage}`);
+      if (stage in summary) {
+        card.node().classList.remove("hidden");
+        card.select(".number").text(summary[stage]);
+      } else {
+        card.node().classList.add("hidden");
+      }
+    });
+  }
+  onDataLoad.push(renderSummary);
+</script>

@@ -1,8 +1,255 @@
 <style>
   .component-card.subregionwise-distribution {
-    grid-area: 3 / 1 / 4 / 3;
+    grid-area: subregionwiseDistribution;
+    height: 100%;
+    overflow-y: scroll;
+    font-size: 0.8rem;
+  }
+
+  .subregion-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .subregion-table th {
+    text-align: left;
+    padding: 0.5rem;
+    background: var(--bg3);
+  }
+
+  .subregion-table th.download,
+  .subregion-table th.sortable {
+    text-align: right;
+  }
+
+  .subregion-table th.sortable > div {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .subregion-table th.sortable.selected {
+    color: var(--interactive);
+  }
+
+  .subregion-table tbody tr {
+    cursor: pointer;
+  }
+
+  .subregion-table tbody tr:hover td {
+    background: var(--bg-tinted);
+  }
+
+  .subregion-table td {
+    padding: 0.5rem;
+    border-top: 1px solid var(--d1);
+  }
+
+  .subregion-table th:hover {
+    cursor: pointer;
+  }
+
+  .subregion-table .sortable svg {
+    height: 0.84rem;
+    width: 0.7rem;
+    opacity: 0;
+  }
+
+  .subregion-table .search-box {
+    display: inline-flex;
+    align-items: center;
+    background: var(--bg2);
+    gap: 0.25rem;
+    border: 1px solid var(--d2);
+    border-radius: 0.25rem;
+    padding: 0.25rem;
+  }
+
+  .subregion-table .search-box svg {
+    height: 0.8rem;
+    width: auto;
+  }
+
+  .subregion-table .search-box input {
+    color: var(--fp);
+    font-size: 0.7rem;
+    outline: none;
+    border: none;
+  }
+
+  .subregion-table th button {
+    display: inline-flex;
+    align-items: center;
+    color: var(--interactive);
+    font-weight: 600;
+    font-size: 0.7rem;
+    background: var(--bg2);
+    border-radius: 0.25rem;
+    border: 1px solid var(--d2);
+    outline: none;
+    padding: 0.25rem 0.5rem;
+    gap: 0.25rem;
+    cursor: pointer;
+  }
+
+  .subregion-table th button svg {
+    height: 0.6rem;
+    width: auto;
+  }
+
+  .subregion-table .sortable.selected svg,
+  .subregion-table .sortable:hover svg {
+    opacity: 1;
+  }
+
+  .subregion-table tr:first-child td {
+    border-top: none;
+  }
+
+  .subregion-table td:not(:first-child) {
+    text-align: right;
+    padding-right: 1.6rem;
+  }
+
+  .subregion-table td.name {
+    color: var(--interactive);
   }
 </style>
 <div class="component-card subregionwise-distribution">
-  Subregionwise Distribution
+  <table class="subregion-table">
+    <thead>
+      <tr>
+        <th colspan="3">
+          <div class="search-box">
+            {% include("icons/search.svg") %}
+            <input
+              id="subregion-table-search"
+              type="text"
+              value=""
+              placeholder="Search for Region..."
+              oninput="renderSubregionTable()"
+            />
+          </div>
+        </th>
+        <th colspan="2" class="download">
+          <button onclick="downloadSubregionTableCsv()">
+            <span>Download CSV</span>
+            {% include("icons/download.svg") %}
+          </button>
+        </th>
+      </tr>
+      <tr>
+        <th>Region Name</th>
+        <th
+          class="sortable suspected"
+          onclick="sortSubregionTable('suspected')"
+        >
+          <div>
+            <span>Suspected</span>
+            {% include("icons/sort.svg") %}
+          </div>
+        </th>
+        <th class="sortable tested" onclick="sortSubregionTable('tested')">
+          <div>
+            <span>Tested</span>
+            {% include("icons/sort.svg") %}
+          </div>
+        </th>
+        <th
+          class="sortable confirmed"
+          onclick="sortSubregionTable('confirmed')"
+        >
+          <div>
+            <span>Confirmed</span>
+            {% include("icons/sort.svg") %}
+          </div>
+        </th>
+        <th class="sortable deaths" onclick="sortSubregionTable('deaths')">
+          <div>
+            <span>Deaths</span>
+            {% include("icons/sort.svg") %}
+          </div>
+        </th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 </div>
+<script>
+  let subregionTableState = {
+    sortKey: "confirmed",
+    sortOrder: -1,
+  };
+
+  function renderSubregionTable() {
+    const tbody = d3.select(".subregionwise-distribution tbody");
+    tbody.text("");
+
+    const sortOrder = subregionTableState.sortOrder;
+    const sortKey = subregionTableState.sortKey;
+    let rows = data.subregionwise_distribution.sort(
+      (r1, r2) => sortOrder * (r1[sortKey] > r2[sortKey] ? 1 : -1),
+    );
+
+    const searchTerm = d3
+      .select("#subregion-table-search")
+      .node()
+      .value.toUpperCase()
+      .replaceAll(" ", "");
+
+    if (searchTerm) {
+      rows = rows.filter((row) =>
+        row.name.toUpperCase().replaceAll(" ", "").includes(searchTerm),
+      );
+    }
+
+    const stages = ["suspected", "tested", "confirmed", "deaths"];
+    stages.forEach((stage) => {
+      const th = d3.select(`.subregion-table .sortable.${stage}`).node();
+      if (subregionTableState.sortKey == stage) {
+        th.classList.add("selected");
+        if (subregionTableState.sortOrder == -1) {
+          th.classList.add("descending");
+        } else {
+          th.classList.remove("descending");
+        }
+      } else {
+        th.classList.remove("selected");
+        th.classList.remove("descending");
+      }
+    });
+
+    rows.forEach((row) => {
+      const tr = tbody.append("tr");
+      tr.on("click", () => (location.href = `/region/${row._id}`));
+      tr.append("td").attr("class", "name").text(row.name);
+      stages.forEach((stage) => tr.append("td").text(row[stage]));
+    });
+  }
+  onDataLoad.push(renderSubregionTable);
+
+  function sortSubregionTable(sortKey) {
+    if (subregionTableState.sortKey == sortKey) {
+      subregionTableState.sortOrder = -1 * subregionTableState.sortOrder;
+    } else {
+      subregionTableState.sortKey = sortKey;
+      subregionTableState.sortOrder = -1;
+    }
+    renderSubregionTable();
+  }
+
+  function downloadSubregionTableCsv() {
+    const rows = [];
+    data.subregionwise_distribution.forEach((row) => {
+      rows.push({
+        Region: row.name,
+        Suspected: row.suspected,
+        Tested: row.tested,
+        Confirmed: row.confirmed,
+        Deaths: row.deaths,
+      });
+    });
+    const fileContent = Papa.unparse(rows);
+    downloadAsFile(fileContent, "cases-table.csv");
+  }
+</script>

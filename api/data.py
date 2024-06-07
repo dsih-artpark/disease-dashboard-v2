@@ -28,6 +28,7 @@ def query():
         "region_name": region.name,
         "start_date": start_date_str,
         "end_date": end_date_str,
+        "available_stages": request.tenant.stages,
     }
 
     requested_aggregates = request.json.get("aggregates", [])

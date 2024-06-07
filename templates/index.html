@@ -10,14 +10,20 @@
       main {
         display: grid;
         grid-gap: 1rem;
-        grid-template-columns: 66vh 1fr;
+        grid-template-columns: 75vh 1fr 75vh;
+        grid-template-rows: auto 55vh auto;
+        grid-template-areas:
+          'map summary summary'
+          'map subregionwiseDistribution subregionwiseDistribution'
+          'trends trends demographicDistributions'
+        ;
         padding: 1rem max(2rem, calc(50vw - 640px));
       }
 
       .component-card {
         box-shadow: 0px 0px 2px 0px rgba(0, 0, 0, 0.08), 0px 1px 4px 0px rgba(69, 75, 87, 0.12), 0px 0px 0px 1px rgba(152, 161, 178, 0.10);
-        padding: 1rem;
-        border-radius: 0.75rem;
+        padding: 0.5rem;
+        border-radius: 0.5rem;
         background: var(--bg2);
         place-self: stretch;
       }
@@ -25,6 +31,7 @@
     <script>
       const csrfToken = "{{csrf_token()}}";
       const onDataLoad = [];
+      let data;
       async function loadData() {
         const response = await fetch("/api/data/query", {
           method: "POST",
@@ -44,11 +51,28 @@
             ],
           }),
         });
-        const data = await response.json();
-        console.debug(data);
+        data = await response.json();
+        onDataLoad.forEach((fn) => {
+          fn(data);
+        });
       }
       window.addEventListener("load", loadData);
+
+      function downloadAsFile(text, filename) {
+        var element = document.createElement("a");
+        element.setAttribute(
+          "href",
+          "data:text/plain;charset=utf-8," + encodeURIComponent(text),
+        );
+        element.setAttribute("download", filename);
+        element.style.display = "none";
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+      }
     </script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="/static/js/papaparse.min.js"></script>
   </head>
   <body>
     {% include("components/header.html") %}

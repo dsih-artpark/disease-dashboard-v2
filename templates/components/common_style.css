@@ -9,10 +9,19 @@
   /* background-colors */
   --bg1: #f5faff;
   --bg2: #ffffff;
+  --bg3: #f7f7f9;
+  --bg-shaded: #b6d9f9;
+  --bg-tinted: #cfe8ff;
+
+  /* dim */
+  --d1: #d7d7d7;
+  --d2: #e4e4e4;
 
   /* font */
   --f1: #364256;
-  --f2: #4f4f50;
+  --f2: #495974;
+
+  --interactive: #005fdf;
 }
 
 html {
