@@ -11,6 +11,7 @@
   --bg2: #ffffff;
   --bg3: #f7f7f9;
   --bg-shaded: #b6d9f9;
+  --bg-shaded-2: #94c7f5;
   --bg-tinted: #cfe8ff;
 
   /* dim */
@@ -41,4 +42,53 @@ b {
 
 body {
   background: var(--bg1);
+}
+
+.tabset {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(10, auto);
+  gap: 0.75rem 0.5rem;
+  justify-content: stretch;
+  justify-items: start;
+  font-size: 0.8rem;
+  padding-top: 0.5rem;
+}
+
+.tabset > input {
+  display: none;
+}
+
+.tabset > label {
+  font-weight: 600;
+  color: var(--interactive);
+  background: var(--d2);
+  width: 100%;
+  text-align: center;
+  padding: 0.33rem 0.5rem;
+  border-radius: 0.33rem;
+  cursor: pointer;
+  transition:
+    color 0.1s ease-in,
+    background-color 0.1s ease-in;
+}
+
+.tabset > input:checked + label,
+.tabset > label:hover {
+  background: var(--interactive);
+  color: var(--bg1);
+}
+
+.tabset > div {
+  grid-row: 2 / 3;
+  grid-column: 1 / 11;
+  width: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.1s ease-in;
+}
+
+.tabset > input:checked + label + div {
+  opacity: 1;
+  pointer-events: initial;
 }

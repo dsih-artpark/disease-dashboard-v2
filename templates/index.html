@@ -15,17 +15,21 @@
         grid-template-areas:
           'map summary summary'
           'map subregionwiseDistribution subregionwiseDistribution'
-          'trends trends demographicDistributions'
+          'trends trends featureDistributions'
         ;
         padding: 1rem max(2rem, calc(50vw - 640px));
       }
 
       .component-card {
         box-shadow: 0px 0px 2px 0px rgba(0, 0, 0, 0.08), 0px 1px 4px 0px rgba(69, 75, 87, 0.12), 0px 0px 0px 1px rgba(152, 161, 178, 0.10);
-        padding: 0.5rem;
+        padding: 0.75rem;
         border-radius: 0.5rem;
         background: var(--bg2);
         place-self: stretch;
+      }
+
+      .component-card h2 {
+        font-size: 1rem;
       }
     </style>
     <script>
@@ -46,7 +50,7 @@
             aggregates: [
               "summary",
               "subregionwise_distribution",
-              "demographic_distributions",
+              "feature_distributions",
               "trends",
             ],
           }),
@@ -82,7 +86,7 @@
       <!-- -->
       {% include("components/summary.html") %}
       <!-- -->
-      {% include("components/demographic_distributions.html") %}
+      {% include("components/feature_distributions.html") %}
       <!-- -->
       {% include("components/subregionwise_distribution.html") %}
       <!-- -->

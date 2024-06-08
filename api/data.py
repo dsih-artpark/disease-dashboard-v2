@@ -41,8 +41,8 @@ def query():
             region, start_date, end_date,
         )
 
-    if "demographic_distributions" in requested_aggregates:
-        result["demographic_distributions"] = _demographic_distributions(
+    if "feature_distributions" in requested_aggregates:
+        result["feature_distributions"] = _feature_distributions(
             region_id, start_date, end_date,
         )
 
@@ -94,7 +94,7 @@ def _subregionwise_distribution(region, start_date, end_date):
 
 
 
-def _demographic_distributions(region_id, start_date, end_date):
+def _feature_distributions(region_id, start_date, end_date):
     query = CaseEntry.objects(
         regions = region_id,
         record_date__gte = start_date,
@@ -117,9 +117,17 @@ def _demographic_distributions(region_id, start_date, end_date):
         }}
     ])
 
+    test_type_distribution = query.aggregate([
+        {"$group": {
+            "_id": "$test_type",
+            "cases": {"$sum": "$confirmed"}
+        }}
+    ])
+
     return {
         "age_range": list(age_range_distribution),
-        "gender": list(gender_distribution)
+        "gender": list(gender_distribution),
+        "test_type": list(test_type_distribution),
     }
 
 def _trends(region_id, start_date, end_date):
