@@ -1,0 +1,329 @@
+<style>
+  #space-time-box {
+    display: inline-grid;
+    grid-template-columns: auto auto;
+    padding: 0.5rem;
+    border: 1.5px solid var(--d1);
+    border-radius: 0.25rem;
+    font-size: 0.7rem;
+    color: var(--f1);
+    align-items: center;
+    position: relative;
+  }
+
+  #space-time-box .box-content {
+    min-width: 10rem;
+    display: inline-grid;
+    grid-template-columns: auto 1fr auto;
+    grid-gap: 0.5rem;
+    padding: 0 0.5rem;
+    cursor: pointer;
+  }
+
+  #location-picker .box-content {
+    border-right: 1.5px solid var(--d1);
+  }
+
+  #space-time-box > div > input {
+    display: none;
+  }
+
+  #space-time-box h3 {
+    font-size: 0.9rem;
+    padding-bottom: 0.25rem;
+  }
+
+  #space-time-box .box-content svg {
+    height: 0.7rem;
+    width: auto;
+    margin-top: 0.05rem;
+  }
+
+  #space-time-box input:checked ~ label > svg:last-child,
+  #space-time-box input:focus ~ svg:last-child {
+    transform: scaleY(-1);
+  }
+
+  #space-time-box .closer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: none;
+    opacity: 0;
+    display: none;
+    z-index: 200;
+  }
+
+  #space-time-box input:checked ~ .closer {
+    display: initial;
+  }
+
+  #space-time-box .popdown {
+    position: absolute;
+    background: var(--bg2);
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
+    border-radius: 0.5rem;
+    top: 2.5rem;
+    left: 0px;
+    width: 100%;
+    padding: 0.5rem 0;
+    display: none;
+    z-index: 300;
+  }
+
+  #location-picker .current-location {
+    grid-area: 1 / 2 / 2 / 3;
+    display: flex;
+    justify-content: space-between;
+    gap: 0.25rem;
+  }
+
+  #location-picker .current-location-type {
+    font-size: 0.6rem;
+    background: var(--bg-shaded);
+    padding: 0.1rem 0.33rem;
+    font-weight: 600;
+    border-radius: 0.1rem;
+  }
+
+  #location-search-input {
+    grid-area: 1 / 2 / 2 / 3;
+    outline: none;
+    border: none;
+    background: none;
+    font-size: inherit;
+    color: inherit;
+    padding: 0;
+    margin: 0;
+    opacity: 0;
+    z-index: 300;
+  }
+
+  #location-search-input:focus {
+    background: var(--bg2);
+    opacity: 1;
+  }
+
+  #location-picker .popdown.visible {
+    display: grid;
+    padding: 0.5rem;
+  }
+
+  #location-picker .popdown a {
+    display: grid;
+    grid-gap: 0.125rem;
+    color: inherit;
+    text-decoration: none;
+    padding: 0.25rem 0;
+  }
+
+  #location-picker .popdown a:hover {
+    opacity: 0.8;
+  }
+
+  #location-picker .popdown a:not(:last-child) {
+    border-bottom: 1.5px solid var(--d1);
+  }
+
+  #date-picker input:checked ~ .popdown {
+    display: grid;
+  }
+
+  #date-picker .popdown {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  #date-picker .popdown > *:first-child {
+    border-right: 1.5px solid var(--d1);
+  }
+  #date-picker .popdown > * {
+    padding: 0 0.5rem;
+  }
+
+  #date-picker .popdown form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  #date-picker .popdown form > label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding-bottom: 0.25rem;
+  }
+
+  #date-picker .popdown form input {
+    font-size: inherit;
+    color: inherit;
+  }
+
+  #date-picker .popdown div > button {
+    font-size: inherit;
+    outline: none;
+    color: inherit;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 0.25rem 0;
+    cursor: pointer;
+  }
+  #date-picker .popdown div > button:not(:last-child) {
+    border-bottom: 1.5px solid var(--d1);
+  }
+  #date-picker .popdown div > button:hover {
+    opacity: 0.8;
+  }
+</style>
+<div id="space-time-box">
+  <div id="location-picker">
+    <div class="box-content">
+      {% include("icons/location_pin.svg") %}
+      <div class="current-location">
+        <b class="current-location-name"></b>
+        <span class="current-location-type"></span>
+      </div>
+      <input
+        type="text"
+        id="location-search-input"
+        placeholder="Search Locations..."
+        oninput="onLocationSearch()"
+        onfocusout="closeLocationPopdown(event)"
+      />
+      {% include("icons/chevron_down.svg") %}
+    </div>
+    <div class="popdown">
+      <h3>Search Results</h3>
+      <div class="results-list"></div>
+    </div>
+  </div>
+  <div id="date-picker">
+    <input id="date-picker-dropdown-control" type="checkbox" />
+    <label for="date-picker-dropdown-control" class="box-content">
+      {% include("icons/calendar.svg") %}
+      <span class="period-name"></span>
+      {% include("icons/chevron_down.svg") %}
+    </label>
+    <label for="date-picker-dropdown-control" class="closer"> </label>
+    <div class="popdown">
+      <form>
+        <h3>Custom Date Range</h3>
+        <label>
+          <b>Start Date</b>
+          <input
+            type="date"
+            id="custom-start-date"
+            onchange="applyCustomDate()"
+          />
+        </label>
+        <label>
+          <b>End Date</b>
+          <input
+            type="date"
+            id="custom-end-date"
+            onchange="applyCustomDate()"
+          />
+        </label>
+      </form>
+      <div>
+        <h3>Presets</h3>
+        <button onclick="applyDatePreset(0)">
+          <b>This Month</b>
+          <span class="this-month-name"></span>
+        </button>
+        <button onclick="applyDatePreset(1)">
+          <b>Last Month</b>
+          <span class="last-month-name"></span>
+        </button>
+        <button onclick="applyDatePreset(2)">
+          <b>This Year</b>
+          <span class="this-year-name"></span>
+        </button>
+        <button onclick="applyDatePreset(3)">
+          <b>Last Year</b>
+          <span class="last-year-name"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <script>
+    async function onLocationSearch() {
+      const query = d3.select("#location-search-input").node().value;
+      if (query) {
+        const resp = await fetch(`/region_search?q=${query}`);
+        const results = await resp.json();
+        const popdown = d3.select("#location-picker .popdown");
+        popdown.node().classList.add("visible");
+        const list = popdown.select(".results-list");
+        list.text("");
+        results.forEach((result) => {
+          const a = list.append("a");
+          a.attr("href", `/region/${result[0]}`);
+          a.append("b").text(result[1]);
+          a.append("span").text(result[0]);
+        });
+      } else {
+        closeLocationPopdown();
+      }
+    }
+
+    function closeLocationPopdown(event) {
+      if (event && event.relatedTarget.tagName == "A") {
+        return;
+      }
+      const popdown = d3.select("#location-picker .popdown");
+      popdown.node().classList.remove("visible");
+      d3.select("#location-search-input").node().value = "";
+    }
+
+    async function applyDatePreset(i) {
+      dateSettings.startDate = datePresets[i].startDate;
+      dateSettings.endDate = datePresets[i].endDate;
+      dateSettings.periodName = datePresets[i].periodName;
+      await loadData();
+      d3.select("#date-picker-dropdown-control").node().checked = false;
+    }
+
+    async function applyCustomDate() {
+      const startDate = d3.select("#custom-start-date").node().value;
+      const endDate = d3.select("#custom-end-date").node().value;
+      if (startDate && endDate) {
+        const startDateObj = new Date(startDate);
+        const endDateObj = new Date(endDate);
+        if (endDateObj <= startDateObj) {
+          return;
+        } else {
+          dateSettings.startDate = dateObjToStr(startDateObj);
+          dateSettings.endDate = dateObjToStr(endDateObj);
+          dateSettings.periodName = `${startDateObj.toLocaleDateString()} to ${endDateObj.toLocaleDateString()}`;
+          await loadData();
+          d3.select("#date-picker-dropdown-control").node().checked = false;
+        }
+      }
+    }
+
+    onDataLoad.push(() => {
+      d3.select("#location-picker .current-location-name").text(
+        data.region_name,
+      );
+      d3.select("#location-picker .current-location-type").text(
+        data.region_type,
+      );
+      d3.select("#date-picker .period-name").text(dateSettings.periodName);
+      d3.select("#date-picker .this-month-name").text(
+        datePresets[0].periodName,
+      );
+      d3.select("#date-picker .last-month-name").text(
+        datePresets[1].periodName,
+      );
+      d3.select("#date-picker .this-year-name").text(datePresets[2].periodName);
+      d3.select("#date-picker .last-year-name").text(datePresets[3].periodName);
+    });
+  </script>
+</div>

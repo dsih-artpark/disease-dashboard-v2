@@ -1,6 +1,7 @@
 venv/
 __pycache__/
 .env
+autocomplete_objs/
 source_files/
 tenants/*
 !tenants/__init__.py

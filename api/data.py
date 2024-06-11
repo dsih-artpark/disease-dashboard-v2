@@ -26,6 +26,7 @@ def query():
     result = {
         "region_id": region_id,
         "region_name": region.name,
+        "region_type": region.region_type,
         "start_date": start_date_str,
         "end_date": end_date_str,
         "available_stages": request.tenant.stages,

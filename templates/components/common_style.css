@@ -22,7 +22,13 @@
   --f1: #364256;
   --f2: #495974;
 
-  --interactive: #005fdf;
+  --interactive: #2268c3;
+
+  /* reds */
+  --red1: #ffe0e4;
+  --red2: #ff808e;
+  --red3: #ff334b;
+  --red4: #cc0018;
 }
 
 html {

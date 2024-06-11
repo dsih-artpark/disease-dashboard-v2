@@ -1,19 +1,22 @@
 from datetime import datetime, timedelta
 
-from flask import abort, Flask, make_response, redirect, render_template, request, session
+from flask import abort, Flask, make_response, redirect, render_template, request, send_file, session
 from flask_wtf.csrf import CSRFProtect
 from googleapiclient.discovery import build as google_build
 import google_auth_oauthlib.flow
 
 from api.data import bp as data_api_blueprint
 import config
-from models import User
+from models import Region, User
+import region_search
 from tenants import get_tenant_for_domain
 
 app = Flask(__name__, template_folder="templates")
 app.secret_key = config.FLASK_SECRET_KEY
 app.register_blueprint(data_api_blueprint, url_prefix="/api/data")
 CSRFProtect(app)
+
+region_search.init()
 
 @app.before_request
 def request_preprocessor():
@@ -37,11 +40,51 @@ def request_preprocessor():
 
 @app.route("/")
 def index():
-    return render_template("index.html", tenant=request.tenant)
+    return redirect("/region/" + request.tenant.scope_region)
+
+@app.route("/region/<region_id>")
+def dashboard_page(region_id):
+    region = Region.objects(region_id=region_id).first()
+    if not region:
+        abort(404)
+    else:
+        return render_template("index.html", tenant=request.tenant)
+
+@app.route("/maps/subregions/<region_id>")
+def subregion_map(region_id):
+    region_id = region_id.replace("/", "")
+    region = Region.objects(region_id=region_id).first()
+    if not region:
+        abort(404)
+        return
+
+    if region.in_scope(request.tenant.scope_region):
+        return send_file("/".join(["source_files", "geojsons", "subregions", region_id]) + ".geojson")
+    else:
+        abort(401)
+
+@app.route("/region_search")
+def region_search_fn():
+    q = request.args.get("q")
+    if not q:
+        return {"results": []}
+    return region_search.search(request.tenant.tenant_id, q)
+
 
 @app.route("/login")
 def login():
     return render_template("login.html", tenant=request.tenant)
+
+@app.route("/logout")
+def logout():
+    resp = make_response(redirect("/"))
+    resp.set_cookie(
+        "auth",
+        value="",
+        httponly=True,
+        expires=datetime.utcnow() + timedelta(days=7),
+    )
+    return resp
 
 @app.route("/start-google-auth")
 def start_google_auth():

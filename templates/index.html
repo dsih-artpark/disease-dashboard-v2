@@ -35,7 +35,66 @@
     <script>
       const csrfToken = "{{csrf_token()}}";
       const onDataLoad = [];
+      const regionId = location.pathname.split("/").pop();
+      const dateSettings = {
+        startDate: "",
+        endDate: "",
+        periodName: "",
+      };
       let data;
+
+      const datePresets = [];
+      function computeDatePresets() {
+        let today = new Date("2024-05-01");
+
+        const thisMonthStartDate = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          1,
+        );
+        const thisMonthEndDate = new Date(
+          today.getFullYear(),
+          today.getMonth() + 1,
+          0,
+        );
+        datePresets.push({
+          startDate: dateObjToStr(thisMonthStartDate),
+          endDate: dateObjToStr(thisMonthEndDate),
+          periodName: `${monthShortNames[thisMonthStartDate.getMonth()]} '${(thisMonthStartDate.getFullYear() % 100).toString().padStart(2, "0")}`,
+        });
+
+        const lastMonthStartDate = new Date(
+          today.getFullYear(),
+          today.getMonth() - 1,
+          1,
+        );
+        const lastMonthEndDate = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          0,
+        );
+        datePresets.push({
+          startDate: dateObjToStr(lastMonthStartDate),
+          endDate: dateObjToStr(lastMonthEndDate),
+          periodName: `${monthShortNames[lastMonthStartDate.getMonth()]} '${(lastMonthStartDate.getFullYear() % 100).toString().padStart(2, "0")}`,
+        });
+
+        const thisYearStartDate = new Date(today.getFullYear(), 0, 1);
+        const thisYearEndDate = new Date(today.getFullYear(), 11, 31);
+        datePresets.push({
+          startDate: dateObjToStr(thisYearStartDate),
+          endDate: dateObjToStr(thisYearEndDate),
+          periodName: thisYearStartDate.getFullYear().toString(),
+        });
+
+        const lastYearStartDate = new Date(today.getFullYear() - 1, 0, 1);
+        const lastYearEndDate = new Date(today.getFullYear() - 1, 11, 31);
+        datePresets.push({
+          startDate: dateObjToStr(lastYearStartDate),
+          endDate: dateObjToStr(lastYearEndDate),
+          periodName: lastYearStartDate.getFullYear().toString(),
+        });
+      }
       async function loadData() {
         const response = await fetch("/api/data/query", {
           method: "POST",
@@ -44,9 +103,9 @@
             "X-CSRFToken": csrfToken,
           },
           body: JSON.stringify({
-            region_id: "state_29",
-            start_date: "2024-02-01",
-            end_date: "2024-02-29",
+            region_id: regionId,
+            start_date: dateSettings.startDate,
+            end_date: dateSettings.endDate,
             aggregates: [
               "summary",
               "subregionwise_distribution",
@@ -60,7 +119,14 @@
           fn(data);
         });
       }
-      window.addEventListener("load", loadData);
+
+      window.addEventListener("load", () => {
+        computeDatePresets();
+        dateSettings.startDate = datePresets[0].startDate;
+        dateSettings.endDate = datePresets[0].endDate;
+        dateSettings.periodName = datePresets[0].periodName;
+        loadData();
+      });
 
       function downloadAsFile(text, filename) {
         var element = document.createElement("a");
@@ -74,6 +140,34 @@
         element.click();
         document.body.removeChild(element);
       }
+
+      function getRootCssVar(varName) {
+        return getComputedStyle(
+          document.querySelector(":root"),
+        ).getPropertyValue(varName);
+      }
+
+      function dateObjToStr(dateObj) {
+        const y = dateObj.getFullYear().toString();
+        const m = (dateObj.getMonth() + 1).toString().padStart(2, "0");
+        const d = dateObj.getDate().toString().padStart(2, "0");
+        return `${y}-${m}-${d}`;
+      }
+
+      const monthShortNames = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
     </script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="/static/js/papaparse.min.js"></script>
