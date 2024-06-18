@@ -33,6 +33,26 @@ class CaseEntry(Document):
         ]
     }
 
+class Prediction(Document):
+    region_id = StringField(required=True)
+    parent_id = StringField(required=True)
+    date = DateTimeField(required=True)
+
+    computation_date = DateTimeField(required=True)
+    source_filename = StringField(required=True)
+
+    prediction = FloatField(default=-2)
+    prediction_zone = IntField(default=-2)
+    threshold_method = StringField()
+
+    meta = {
+        "collection": "predictions",
+        "indexes": [
+            {"fields": ["region_id", "date"], "unique": True},
+            ("parent_id", "date"),
+        ]
+    }
+
 class Region(Document):
     region_id = StringField(unique=True, required=True)
     region_type = StringField(required=True)
@@ -50,7 +70,8 @@ class Region(Document):
 
 class SourceFile(Document):
     name = StringField(unique=True)
-    import_date = DateTimeField(required=True)
+    data_type = StringField(required=True)
+    import_date = DateTimeField(required=True, default=datetime.utcnow())
     import_errors = ListField(default=[])
 
     meta = {"collection": "source_files"}

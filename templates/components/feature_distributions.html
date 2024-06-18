@@ -89,12 +89,10 @@
       }
     });
     rows = rows.sort((r1, r2) => r2.sortOrder - r1.sortOrder);
-    console.log(rows);
     return rows;
   }
 
   function renderFeatureDistributions() {
-    console.log(data.feature_distributions);
     const keys = ["age_range", "gender", "test_type"];
     keys.forEach((key) => {
       const div = d3.select(`#cases-by-${key}`);

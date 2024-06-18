@@ -7,7 +7,7 @@ import google_auth_oauthlib.flow
 
 from api.data import bp as data_api_blueprint
 import config
-from models import Region, User
+from models import CaseEntry, Region, User
 import region_search
 from tenants import get_tenant_for_domain
 
@@ -45,10 +45,17 @@ def index():
 @app.route("/region/<region_id>")
 def dashboard_page(region_id):
     region = Region.objects(region_id=region_id).first()
+
+    last_case_entry = CaseEntry.objects(regions=region_id).order_by("-record_date").first()
+    last_recorded_case_date = last_case_entry.record_date.isoformat().split("T")[0]
     if not region:
         abort(404)
     else:
-        return render_template("index.html", tenant=request.tenant)
+        return render_template(
+            "index.html",
+            tenant = request.tenant,
+            latest_date = last_recorded_case_date,
+        )
 
 @app.route("/maps/subregions/<region_id>")
 def subregion_map(region_id):

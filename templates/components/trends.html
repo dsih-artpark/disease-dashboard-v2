@@ -2,5 +2,150 @@
   .component-card.trends {
     grid-area: trends;
   }
+  .component-card.trends svg {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+  }
 </style>
-<div class="component-card trends">Trends</div>
+<div class="component-card trends">
+  <h2>Trends</h2>
+  <div class="tabset">
+    <input
+      type="radio"
+      name="trends-tab"
+      value="confirmed"
+      id="trends-tab-1"
+      onchange="renderTrendsSection()"
+      checked
+    />
+    <label for="trends-tab-1">Confirmed</label>
+
+    <input
+      type="radio"
+      name="trends-tab"
+      value="tested"
+      id="trends-tab-2"
+      onchange="renderTrendsSection()"
+    />
+    <label for="trends-tab-2">Tested</label>
+  </div>
+  <svg id="trends-chart-svg"></svg>
+</div>
+<script>
+  function dateStrToChartLabel(date) {
+    const chunks = date.split("-");
+    const monthMap = {
+      "01": "Jan",
+      "02": "Feb",
+      "03": "Mar",
+      "04": "Apr",
+      "05": "May",
+      "06": "Jun",
+      "07": "Jul",
+      "08": "Aug",
+      "09": "Sep",
+      10: "Oct",
+      11: "Nov",
+      12: "Dec",
+    };
+    let label = monthMap[chunks[1]];
+    if (chunks[2]) label = parseInt(chunks[2]).toString() + " " + label;
+    return label;
+  }
+
+  function renderTrendsSection() {
+    const chartType = d3.select("input[name=trends-tab]:checked").node().value;
+    const svg = d3.select("#trends-chart-svg");
+    svg.text("");
+
+    if (chartType == "confirmed" || chartType == "tested") {
+      const points = data.trends.map((obj) => {
+        return {
+          label: dateStrToChartLabel(obj.date),
+          value: obj[chartType],
+        };
+      });
+      plotChart(svg, points);
+    }
+  }
+
+  function plotChart(svg, points) {
+    svg.text("");
+
+    const values = points.map((p) => p.value);
+    const labels = points.map((p) => p.label);
+    const maxValue = Math.max(...values);
+
+    const maxCharLength =
+      maxValue < 10 ? 3 : maxValue.toLocaleString().length + 1;
+    const margin = { t: 30, r: 40, b: 32, l: 10 * (maxCharLength + 1) };
+    const height = parseInt(svg.style("height")) - margin.t - margin.b;
+    const width = parseInt(svg.style("width")) - margin.r - margin.l;
+    svg.attr(
+      "viewBox",
+      `${0 - margin.l} ${0 - margin.t} ${width + margin.l + margin.r} ${height + margin.t + margin.b}`,
+    );
+
+    // draw axes
+    const axesLayer = svg.append("g");
+
+    // x-axis
+    const xScale = d3.scaleBand().range([0, width]).domain(labels);
+    const dx = width / labels.length;
+    const nLabels = width < 640 ? 4 : 8;
+    const xAxis = d3
+      .axisBottom(xScale)
+      .tickSize(0)
+      .tickFormat((t, i) =>
+        (labels.length - i - 1) % parseInt(labels.length / (nLabels - 1)) ==
+          0 || labels.length <= 7
+          ? labels[i]
+          : "",
+      );
+    const xG = svg
+      .append("g")
+      .attr("transform", `translate(0, ${height})`)
+      .attr("class", "x-scale")
+      .call(xAxis);
+    xG.selectAll("text")
+      .attr("transform", `translate(${-dx / 2}, 0)`)
+      .style("fill", getRootCssVar("--fp"))
+      .style("font-size", 14)
+      .attr("dy", 20);
+    xG.select("path")
+      .style("stroke", getRootCssVar("--fp"))
+      .style("stroke-width", "1.4");
+
+    // y-axis
+    const yScale = d3.scaleLinear().range([height, 0]).domain([0, maxValue]);
+    const yAxis = d3.axisLeft(yScale).tickSize(0).ticks(6);
+    if (maxValue < 10) {
+      yAxis.tickValues(Array.from(Array(parseInt(maxValue) + 1).keys()));
+      yAxis.tickFormat((t, i) => parseInt(t));
+    }
+    const yG = svg.append("g").attr("class", "y-scale").call(yAxis);
+    yG.selectAll("text")
+      .style("fill", getRootCssVar("--f1"))
+      .style("font-size", 14)
+      .attr("dx", -10);
+    yG.select("path")
+      .style("stroke", getRootCssVar("--f1"))
+      .style("stroke-width", "1.4");
+
+    // plot the line
+    const line = d3
+      .line()
+      .x((p) => xScale(p.label))
+      .y((p) => yScale(p.value))
+      .curve(d3.curveLinear);
+    const plotLayer = svg.append("g");
+    plotLayer
+      .append("path")
+      .datum(points)
+      .attr("d", line)
+      .style("fill", "none")
+      .style("stroke", getRootCssVar("--bg-shaded-2"))
+      .style("stroke-width", 2);
+  }
+  onDataLoad.push(renderTrendsSection);
+</script>

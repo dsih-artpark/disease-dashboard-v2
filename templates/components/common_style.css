@@ -85,6 +85,10 @@ body {
   color: var(--bg1);
 }
 
+.tabset > input:not(:checked) + label:hover {
+  opacity: 0.8;
+}
+
 .tabset > div {
   grid-row: 2 / 3;
   grid-column: 1 / 11;

@@ -1,0 +1,71 @@
+<style>
+  #subheader {
+    font-size: 0.8rem;
+    padding: 1rem max(3rem, calc(50vw - 640px));
+    padding-bottom: 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  #subheader .breadcrumbs {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  #subheader .breadcrumbs a {
+    color: var(--f2);
+    text-decoration: none;
+  }
+
+  #subheader .breadcrumbs a:not(:last-child)::after {
+    padding-left: 0.5rem;
+    content: "/";
+  }
+
+  #subheader .breadcrumbs a:last-child {
+    color: var(--f1);
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  #subheader .breadcrumbs a:hover {
+    color: var(--interactive);
+  }
+
+  #subheader .breadcrumbs svg {
+    height: 0.8rem;
+    width: auto;
+    vertical-align: -0.1rem;
+    margin-right: 0.25rem;
+  }
+</style>
+<div id="subheader">
+  <div class="breadcrumbs"></div>
+  <div class="date">
+    <b>Latest Recorded Date:</b>
+    <span class="latest-date"></span>
+  </div>
+</div>
+<script>
+  onDataLoad.push(() => {
+    const latestDateStr = latestDate.split("-").toReversed().join("-");
+    d3.select("#subheader .latest-date").text(latestDateStr);
+
+    const bc = d3.select("#subheader .breadcrumbs");
+    bc.text("");
+    data.breadcrumbs.forEach((row, i) => {
+      const a = bc.append("a").attr("href", row[1]);
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M10 1.33331C9.82574 1.33332 9.65842 1.40156 9.53385 1.52342L2.26172 7.47133C2.25332 7.47765 2.24507 7.48416 2.23698 7.49087L2.21224 7.5117V7.513C2.14538 7.57529 2.09203 7.65066 2.05552 7.73444C2.01901 7.81821 2.00011 7.9086 2 7.99998C2 8.17679 2.07024 8.34636 2.19526 8.47138C2.32029 8.59641 2.48986 8.66665 2.66667 8.66665H3.33333V16C3.33333 16.7366 3.93 17.3333 4.66667 17.3333H15.3333C16.07 17.3333 16.6667 16.7366 16.6667 16V8.66665H17.3333C17.5101 8.66665 17.6797 8.59641 17.8047 8.47138C17.9298 8.34636 18 8.17679 18 7.99998C18.0001 7.90838 17.9813 7.81774 17.9447 7.73373C17.9082 7.64972 17.8548 7.57414 17.7878 7.5117L17.7773 7.50389C17.7627 7.49063 17.7475 7.47803 17.7318 7.46613L16.6667 6.59503V3.99998C16.6667 3.63198 16.368 3.33331 16 3.33331H15.3333C14.9653 3.33331 14.6667 3.63198 14.6667 3.99998V4.95962L10.4518 1.5117C10.329 1.39753 10.1677 1.33384 10 1.33331ZM12 9.99998H14.6667V15.3333H12V9.99998Z" fill="currentColor"/>
+          </svg>`;
+      if (i == 0) {
+        a.html(svg + `<span>${row[0]}</span>`);
+      } else {
+        a.html(`<span>${row[0]}</span>`);
+      }
+    });
+  });
+</script>

@@ -34,17 +34,29 @@
     grid-gap: 0.25rem;
     align-items: center;
   }
+
+  .component-card.map svg path:hover {
+    cursor: pointer;
+    opacity: 0.7;
+  }
 </style>
 <div class="component-card map">
-  <nav>Nav</nav>
-  <div id="confirmed-cases-map">
+  <nav>
+    <div>
+      <span>Recorded Data</span>
+    </div>
+    <div>
+      <span>Predictions</span>
+    </div>
+  </nav>
+  <div id="region-map">
     <svg class="map" viewBox="0 0 100 100"></svg>
-    <div id="confirmed-cases-map-scale" class="scale"></div>
+    <div id="map-scale" class="scale"></div>
   </div>
 </div>
 <script>
   let regionMap;
-  async function renderMap() {
+  async function initMapSection() {
     if (!regionMap) {
       // load map only if not previously loaded
       // happens only on page load
@@ -56,17 +68,26 @@
 
   function renderCaseMap(dataRows) {
     const stage = "confirmed";
-    const rows = dataRows.sort((a, b) => b[stage] - a[stage]);
+    const rows = dataRows
+      .map((row) => {
+        return {
+          key: row.region_id,
+          value: row[stage],
+          tooltip: `${row.name}: ${row[stage]} case(s)`,
+          link: `/region/${row.region_id}`,
+        };
+      })
+      .sort((a, b) => b.value - a.value);
 
-    const maxValue = rows[0][stage];
-    const minValue = rows[rows.length - 1][stage];
+    const maxValue = rows[0].value;
+    const minValue = rows[rows.length - 1].value;
     const valueRangeSize = maxValue - minValue;
 
     let scale = [];
     if (valueRangeSize == 0) {
       scale = [[0, `${minValue} cases`, getRootCssVar("--red1")]];
     } else if (valueRangeSize <= 11) {
-      const b = minValue + Math.ceil(caseRangeSize / 2);
+      const b = minValue + Math.ceil(valueRangeSize / 2);
       scale = [
         [0, `Below ${b} cases`, getRootCssVar("--red1")],
         [b, `${b}+ cases`, getRootCssVar("--red4")],
@@ -83,7 +104,41 @@
       ];
     }
 
-    const scaleBox = d3.select("#confirmed-cases-map-scale");
+    renderMap(rows, scale);
+    return;
+
+    const scaleBox = d3.select("#map-scale");
+    scaleBox.text("");
+    for (let i = scale.length - 1; i >= 0; i--) {
+      const div = scaleBox.append("div");
+      div
+        .append("div")
+        .style("display", "inline-block")
+        .style("width", "2rem")
+        .style("height", "0.75rem")
+        .style("background", scale[i][2]);
+      div.append("span").text(scale[i][1]);
+    }
+  }
+
+  function renderMap(rows, scale) {
+    rows = rows.sort((a, b) => b.value - a.value);
+    const maxValue = rows[0].value;
+    const minValue = rows[rows.length - 1].value;
+    const valueRangeSize = maxValue - minValue;
+
+    let regionData = {};
+    rows.forEach((row) => {
+      obj = Object.assign({}, row);
+      obj.ratio = (obj.value - minValue) / (valueRangeSize || 1);
+      for (let i = 0; i < scale.length; i++) {
+        if (obj.value >= scale[i][0]) obj.fill = scale[i][2];
+        else break;
+      }
+      regionData[obj.key] = obj;
+    });
+
+    const scaleBox = d3.select("#map-scale");
     scaleBox.text("");
     for (let i = scale.length - 1; i >= 0; i--) {
       const div = scaleBox.append("div");
@@ -96,31 +151,26 @@
       div.append("span").text(scale[i][1]);
     }
 
-    let regionCases = {};
-    let regionColors = {};
-    rows.forEach((row) => {
-      const value = row[stage];
-      row.ratio = (value - minValue) / (valueRangeSize || 1);
-      regionCases[row._id] = row;
-      for (let i = 0; i < scale.length; i++) {
-        if (value >= scale[i][0]) regionColors[row._id] = scale[i][2];
-        else break;
-      }
-    });
-
     const projection = d3.geoMercator().fitSize([100, 100], regionMap);
     const path = d3.geoPath().projection(projection);
+    const mp = d3.select("#region-map svg");
+    mp.text("");
+
     regionMap.features.forEach((feature) => {
-      d3.select("#confirmed-cases-map svg")
-        .append("path")
+      const data = regionData[feature.properties.region_id];
+      mp.append("path")
         .datum(feature)
-        .style("fill", regionColors[feature.properties.region_id])
+        .style("fill", data.fill)
         .style("stroke-width", "0.33")
         .style("stroke", "#fff")
         .attr("d", path)
+        .on("click", () => {
+          location.href = data.link;
+        })
         .append("title")
-        .text(feature.properties.region_id);
+        .text(data.tooltip);
     });
   }
-  onDataLoad.push(renderMap);
+
+  onDataLoad.push(initMapSection);
 </script>

@@ -3,7 +3,8 @@ from datetime import datetime, timedelta
 from flask import Blueprint, abort, request
 from pymongo import aggregation
 
-from models import Region, CaseEntry
+from import_from_file import predictions
+from models import Region, CaseEntry, Prediction
 
 bp = Blueprint("data", __name__)
 
@@ -11,6 +12,14 @@ bp = Blueprint("data", __name__)
 def query():
     region_id = request.json.get("region_id")
     region = Region.objects(region_id=region_id).first()
+
+    breadcrumbs = []
+    for i in range(len(region.parent_ids)):
+        breadcrumbs.append([region.parent_names[i], region.parent_ids[i]])
+        if region.parent_ids[i]==request.tenant.scope_region:
+            break
+    breadcrumbs = breadcrumbs[::-1] + [[region.name, region_id]]
+
     if not region:
         abort(404)
         return
@@ -27,6 +36,7 @@ def query():
         "region_id": region_id,
         "region_name": region.name,
         "region_type": region.region_type,
+        "breadcrumbs": breadcrumbs,
         "start_date": start_date_str,
         "end_date": end_date_str,
         "available_stages": request.tenant.stages,
@@ -50,6 +60,9 @@ def query():
     if "trends" in requested_aggregates:
         result["trends"] = _trends(region_id, start_date, end_date)
 
+    if "predictions" in requested_aggregates:
+        result["predictions"] = _predictions(region_id, start_date, end_date)
+
     return result
 
 
@@ -65,8 +78,12 @@ def _summary(region_id, start_date, end_date):
         record_date__lte = end_date,
     ).only(*query_fields).aggregate([{"$group": grouping_specs}])
 
-    result = list(aggregate)[0]
-    del result["_id"]
+    result = list(aggregate)
+    if result:
+        result = result[0]
+        del result["_id"]
+    else:
+        result = {stage:0 for stage in request.tenant.stages}
     return result
 
 def _subregionwise_distribution(region, start_date, end_date):
@@ -85,13 +102,17 @@ def _subregionwise_distribution(region, start_date, end_date):
         grouping_specs[stage] = {"$sum": f'${stage}'}
 
     aggregate = list(query.aggregate([{"$group": grouping_specs}]))
-    subregion_list = list(Region.objects(parent_ids__0=region.region_id))
-    subregion_name_map = {s.region_id:s.name for s in subregion_list}
-    subregion_name_map["admin_0"] = "unknown"
-    for obj in aggregate:
-        obj["name"] = subregion_name_map.get(obj["_id"], obj["_id"])
+    aggregate_dict = {r["_id"]:r for r in aggregate}
 
-    return aggregate
+    subregion_list = list(Region.objects(parent_ids__0=region.region_id))
+    results = []
+    for region in subregion_list:
+        row = {"region_id": region.region_id, "name": region.name}
+        case_numbers = aggregate_dict.get(region.region_id, {})
+        for stage in request.tenant.stages:
+            row[stage] = case_numbers.get(stage, 0)
+        results.append(row)
+    return results
 
 
 
@@ -132,38 +153,71 @@ def _feature_distributions(region_id, start_date, end_date):
     }
 
 def _trends(region_id, start_date, end_date):
-    start_sunday = start_date
-    if start_date.weekday()!=6:
-        start_sunday -= timedelta(days=1+start_date.weekday())
+    start_monday = start_date - timedelta(days=start_date.weekday())
+    end_sunday = end_date + timedelta(days=6-end_date.weekday())
 
-    delta = 5 - end_date.weekday()
-    if delta==-1:
-        delta = 6
-    end_saturday = end_date + timedelta(days=delta)
+    labels = {}
+    date = start_monday
+    while date<end_sunday:
+        labels[date.isoformat().split("T")[0]] = {"confirmed": 0, "tested": 0}
+        date += timedelta(days=7)
 
     query = CaseEntry.objects(
         regions = region_id,
-        record_date__gte = start_sunday,
-        record_date__lte = end_saturday,
+        record_date__gte = start_monday,
+        record_date__lte = end_sunday,
     ).only("tested", "confirmed")
 
     aggregate = query.aggregate([
         {"$group": {
-            "_id": {"$week": "$record_date"},
+            "_id": {"$dateToString": {"format": "%Y-%m-%d", "date":"$record_date"}},
             "tested": {"$sum": "$tested"},
             "confirmed": {"$sum": "$confirmed"},
         }},
         {"$sort": {"_id": 1}},
     ])
 
-    labels = []
-    date = start_sunday
-    while date<end_saturday:
-        labels.append(date.isoformat().split("T")[0])
-        date += timedelta(days=7)
-
     records = list(aggregate)
-    for i in range(len(records)):
-        records[i]["_id"] = labels[i]
+    for record in records:
+        date = datetime(*map(int, record["_id"].split("-")))
+        week_start_date = date - timedelta(days=date.weekday())
+        label = week_start_date.isoformat().split("T")[0]
+        labels[label]["confirmed"] += record["confirmed"]
+        labels[label]["tested"] += record["tested"]
 
-    return records
+    results = []
+    for label in sorted(labels.keys()):
+        results.append({
+            "date": label,
+            "confirmed": labels[label]["confirmed"],
+            "tested": labels[label]["tested"]
+        })
+    return results
+
+def _predictions(parent_id, start_date, end_date):
+    end_sunday = end_date + timedelta(days=6-end_date.weekday())
+    prediction_dates = [
+        end_sunday + timedelta(days=1),
+        end_sunday + timedelta(days=8),
+        end_sunday + timedelta(days=15),
+        end_sunday + timedelta(days=22),
+    ]
+
+    subregion_list = list(Region.objects(parent_ids__0=parent_id))
+    results = []
+    for date in prediction_dates:
+        predictions_dict = {}
+        for p in Prediction.objects(parent_id=parent_id, date=date):
+            predictions_dict[p.region_id] = p.prediction_zone
+        date_obj = {
+            "date": date.isoformat().split("T")[0],
+            "predictions": []
+        }
+        for region in subregion_list:
+            date_obj["predictions"].append({
+                "region_id": region.region_id,
+                "name": region.name,
+                "prediction_zone": predictions_dict.get(region.region_id, -2),
+            })
+        results.append(date_obj)
+    return results

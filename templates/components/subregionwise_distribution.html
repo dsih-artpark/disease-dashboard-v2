@@ -221,7 +221,7 @@
 
     rows.forEach((row) => {
       const tr = tbody.append("tr");
-      tr.on("click", () => (location.href = `/region/${row._id}`));
+      tr.on("click", () => (location.href = `/region/${row.region_id}`));
       tr.append("td").attr("class", "name").text(row.name);
       stages.forEach((stage) => tr.append("td").text(row[stage]));
     });

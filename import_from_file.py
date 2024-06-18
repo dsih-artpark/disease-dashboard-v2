@@ -2,7 +2,7 @@ import csv
 from datetime import datetime
 import traceback
 
-from models import CaseEntry, Region, SourceFile
+from models import CaseEntry, Prediction, Region, SourceFile
 
 def _read_csv(filepath):
     rows = []
@@ -12,7 +12,6 @@ def _read_csv(filepath):
     return rows
 
 def case_data(filename):
-    print("IMPORTING CSV CASE DATA:", filename)
     source_exists = SourceFile.objects(name=filename).first()
     if source_exists:
         print("FILE ALREADY IMPORTED, SKIPPING")
@@ -57,6 +56,46 @@ def case_data(filename):
         except Exception as e:
             error = traceback.format_exc()
             errors.append({"line_number": line_number, "error": error, "row": row})
+    return errors
+
+def predictions(filename):
+    source_exists = SourceFile.objects(name=filename).first()
+    if source_exists:
+        print("FILE ALREADY IMPORTED, SKIPPING")
+        return
+
+    rows = _read_csv(filename)
+    errors = []
+    line_number = 1
+    for row in rows:
+        line_number += 1
+        try:
+            obj = Prediction()
+
+            obj.region_id = row["regionID"]
+            assert obj.region_id
+
+            region = Region.objects(region_id=obj.region_id).first()
+            obj.parent_id = region.parent_ids[0] if region.parent_ids else ""
+
+            obj.date = datetime(*map(int, row["startDatePredictedWeek"].split("-")))
+            obj.computation_date = datetime(*map(int, row["dateOfComputingPrediction"].split("-")))
+
+            existing_prediction = Prediction.objects(
+                region_id=obj.region_id, date=obj.date,
+            ).first()
+            if existing_prediction and existing_prediction.computation_date>obj.computation_date:
+                continue
+
+            obj.source_filename = filename
+            obj.prediction = float(row["prediction"])
+            obj.prediction_zone = int(str(row["predictionZone"]).split(".")[0])
+            obj.threshold_method = row["thresholdMethod"]
+            obj.save()
+        except Exception as e:
+            error = traceback.format_exc()
+            errors.append({"line_number": line_number, "error": error, "row": row})
+
     return errors
 
 def regions(filename):
