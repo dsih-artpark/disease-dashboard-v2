@@ -18,7 +18,7 @@ for region in Region.objects():
     features = []
     for subregion in subregions:
         try:
-            with open(f'{MAP_FOLDER}compressed_individual/{subregion.region_id}.geojson') as f:
+            with open(f'{MAP_FOLDER}individual/{subregion.region_id}.geojson') as f:
                 data = json.loads(f.read())
             feature = data["features"][0]
             feature["properties"] = {"region_id": subregion.region_id}

@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import os
 
 from flask import Blueprint, abort, request
 from pymongo import aggregation
@@ -62,6 +63,9 @@ def query():
 
     if "predictions" in requested_aggregates:
         result["predictions"] = _predictions(region_id, start_date, end_date)
+
+    if "reports" in requested_aggregates:
+        result["reports"] = _reports()
 
     return result
 
@@ -206,18 +210,34 @@ def _predictions(parent_id, start_date, end_date):
     subregion_list = list(Region.objects(parent_ids__0=parent_id))
     results = []
     for date in prediction_dates:
-        predictions_dict = {}
-        for p in Prediction.objects(parent_id=parent_id, date=date):
-            predictions_dict[p.region_id] = p.prediction_zone
         date_obj = {
             "date": date.isoformat().split("T")[0],
-            "predictions": []
+            "prediction": {},
+            "subregions": [],
         }
+        parent_prediction = Prediction.objects(region_id=parent_id, date=date).first()
+        date_obj["prediction"] = {
+            "zone": parent_prediction.prediction_zone if parent_prediction else -2,
+            "value": parent_prediction.prediction if parent_prediction else -0,
+        }
+
+        predictions_dict = {}
+        for p in Prediction.objects(parent_id=parent_id, date=date):
+            predictions_dict[p.region_id] =  {
+                "zone": p.prediction_zone,
+                "value": p.prediction,
+            }
+
         for region in subregion_list:
-            date_obj["predictions"].append({
+            p = predictions_dict.get(region.region_id, {})
+            date_obj["subregions"].append({
                 "region_id": region.region_id,
                 "name": region.name,
-                "prediction_zone": predictions_dict.get(region.region_id, -2),
+                "zone": p.get("zone", -2),
+                "value": p.get("value", 0),
             })
         results.append(date_obj)
     return results
+
+def _reports():
+    return sorted(os.listdir("source_files/reports/" + request.tenant.tenant_id))

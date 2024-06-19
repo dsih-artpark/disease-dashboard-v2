@@ -63,8 +63,18 @@
         return {
           label: dateStrToChartLabel(obj.date),
           value: obj[chartType],
+          dotted: false,
         };
       });
+      if (chartType == "confirmed") {
+        data.predictions.forEach((obj) => {
+          points.push({
+            label: dateStrToChartLabel(obj.date),
+            value: Math.ceil(obj.prediction.value || 0),
+            dotted: true,
+          });
+        });
+      }
       plotChart(svg, points);
     }
   }
@@ -92,7 +102,7 @@
     // x-axis
     const xScale = d3.scaleBand().range([0, width]).domain(labels);
     const dx = width / labels.length;
-    const nLabels = width < 640 ? 4 : 8;
+    const nLabels = width < 480 ? 4 : 8;
     const xAxis = d3
       .axisBottom(xScale)
       .tickSize(0)
@@ -139,13 +149,16 @@
       .y((p) => yScale(p.value))
       .curve(d3.curveLinear);
     const plotLayer = svg.append("g");
-    plotLayer
-      .append("path")
-      .datum(points)
-      .attr("d", line)
-      .style("fill", "none")
-      .style("stroke", getRootCssVar("--bg-shaded-2"))
-      .style("stroke-width", 2);
+    for (let i = 1; i < points.length; i++) {
+      plotLayer
+        .append("path")
+        .datum(points.slice(i - 1, i + 1))
+        .attr("d", line)
+        .style("fill", "none")
+        .style("stroke", getRootCssVar("--bg-shaded-2"))
+        .style("stroke-width", 3)
+        .style("stroke-dasharray", points[i].dotted ? "4 4" : "");
+    }
   }
   onDataLoad.push(renderTrendsSection);
 </script>

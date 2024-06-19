@@ -70,6 +70,16 @@ def subregion_map(region_id):
     else:
         abort(401)
 
+@app.route("/download_report/<filename>")
+def download_report(filename):
+    filepath = "source_files/reports/" + request.tenant.tenant_id + "/" + filename
+    return send_file("/".join([
+        "source_files/reports",
+        request.tenant.tenant_id,
+        filename
+    ]))
+
+
 @app.route("/region_search")
 def region_search_fn():
     q = request.args.get("q")

@@ -2,14 +2,24 @@
   .component-card.map {
     grid-area: map;
     display: grid;
-    grid-template-rows: auto 1fr;
+    grid-template-rows: auto auto;
     grid-gap: 0.75rem;
+  }
+
+  .component-card.map > nav {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
   }
 
   .component-card.map > div {
     display: grid;
     grid-template-rows: auto auto;
     grid-gap: 0.5rem;
+  }
+
+  .component-card.map h4 {
+    font-size: 0.8rem;
   }
 
   svg.map {
@@ -43,10 +53,58 @@
 <div class="component-card map">
   <nav>
     <div>
-      <span>Recorded Data</span>
+      <h4>Recorded Data</h4>
+      <div class="tabset">
+        <input
+          type="radio"
+          name="map-tab"
+          id="map-tab-1"
+          value="confirmed"
+          onchange="renderSelectedMap()"
+          checked
+        />
+        <label for="map-tab-1">Confirmed</label>
+      </div>
     </div>
     <div>
-      <span>Predictions</span>
+      <h4>Weekwise Predictions</h4>
+      <div class="tabset">
+        <input
+          type="radio"
+          name="map-tab"
+          id="map-tab-2"
+          value="prediction-0"
+          onchange="renderSelectedMap()"
+        />
+        <label for="map-tab-2">T+1</label>
+
+        <input
+          type="radio"
+          name="map-tab"
+          id="map-tab-3"
+          value="prediction-1"
+          onchange="renderSelectedMap()"
+        />
+        <label for="map-tab-3">T+2</label>
+
+        <input
+          type="radio"
+          name="map-tab"
+          id="map-tab-4"
+          value="prediction-2"
+          onchange="renderSelectedMap()"
+        />
+        <label for="map-tab-4">T+3</label>
+
+        <input
+          type="radio"
+          name="map-tab"
+          id="map-tab-5"
+          value="prediction-3"
+          onchange="renderSelectedMap()"
+        />
+        <label for="map-tab-5">T+4</label>
+      </div>
     </div>
   </nav>
   <div id="region-map">
@@ -56,14 +114,21 @@
 </div>
 <script>
   let regionMap;
-  async function initMapSection() {
+  async function renderSelectedMap() {
     if (!regionMap) {
       // load map only if not previously loaded
       // happens only on page load
       // skipped when triggered from tab switcher
+      console.log("Loading geojson file");
       regionMap = await d3.json(`/maps/subregions/${regionId}`);
     }
-    renderCaseMap(data.subregionwise_distribution);
+    const mapTab = d3.select("input[name=map-tab]:checked").node().value;
+    if (mapTab == "confirmed") {
+      renderCaseMap(data.subregionwise_distribution);
+    } else {
+      const index = parseInt(mapTab.split("-")[1]);
+      renderPredictionsMap(data.predictions[index].subregions);
+    }
   }
 
   function renderCaseMap(dataRows) {
@@ -89,48 +154,49 @@
     } else if (valueRangeSize <= 11) {
       const b = minValue + Math.ceil(valueRangeSize / 2);
       scale = [
-        [0, `Below ${b} cases`, getRootCssVar("--red1")],
-        [b, `${b}+ cases`, getRootCssVar("--red4")],
+        [0, `Below ${b} cases`, getRootCssVar("--v1")],
+        [b, `${b}+ cases`, getRootCssVar("--v4")],
       ];
     } else {
       const b1 = minValue + Math.ceil(valueRangeSize / 4);
       const b2 = minValue + 2 * Math.ceil(valueRangeSize / 4);
       const b3 = minValue + 3 * Math.ceil(valueRangeSize / 4);
       scale = [
-        [0, `<${b1}`, getRootCssVar("--red1")],
-        [b1, `${b1}-${b2 - 1}`, getRootCssVar("--red2")],
-        [b2, `${b2}-${b3 - 1}`, getRootCssVar("--red3")],
-        [b3, `>${b3}`, getRootCssVar("--red4")],
+        [0, `<${b1}`, getRootCssVar("--v1")],
+        [b1, `${b1}-${b2 - 1}`, getRootCssVar("--v2")],
+        [b2, `${b2}-${b3 - 1}`, getRootCssVar("--v3")],
+        [b3, `>${b3}`, getRootCssVar("--v4")],
       ];
     }
 
     renderMap(rows, scale);
-    return;
+  }
 
-    const scaleBox = d3.select("#map-scale");
-    scaleBox.text("");
-    for (let i = scale.length - 1; i >= 0; i--) {
-      const div = scaleBox.append("div");
-      div
-        .append("div")
-        .style("display", "inline-block")
-        .style("width", "2rem")
-        .style("height", "0.75rem")
-        .style("background", scale[i][2]);
-      div.append("span").text(scale[i][1]);
-    }
+  function renderPredictionsMap(dataRows) {
+    const rows = dataRows.map((row) => {
+      return {
+        key: row.region_id,
+        value: row.zone,
+        tooltip: `${row.name}`,
+        link: `/region/${row.region_id}`,
+      };
+    });
+
+    const scale = [
+      [0, "N/A", getRootCssVar("--bg-shaded")],
+      [1, "Min.", getRootCssVar("--green")],
+      [2, "Low", getRootCssVar("--yellow")],
+      [3, "High", getRootCssVar("--orange")],
+      [4, "V. High", getRootCssVar("--red")],
+    ];
+
+    renderMap(rows, scale);
   }
 
   function renderMap(rows, scale) {
-    rows = rows.sort((a, b) => b.value - a.value);
-    const maxValue = rows[0].value;
-    const minValue = rows[rows.length - 1].value;
-    const valueRangeSize = maxValue - minValue;
-
     let regionData = {};
     rows.forEach((row) => {
       obj = Object.assign({}, row);
-      obj.ratio = (obj.value - minValue) / (valueRangeSize || 1);
       for (let i = 0; i < scale.length; i++) {
         if (obj.value >= scale[i][0]) obj.fill = scale[i][2];
         else break;
@@ -145,7 +211,7 @@
       div
         .append("div")
         .style("display", "inline-block")
-        .style("width", "2rem")
+        .style("width", "1rem")
         .style("height", "0.75rem")
         .style("background", scale[i][2]);
       div.append("span").text(scale[i][1]);
@@ -157,20 +223,20 @@
     mp.text("");
 
     regionMap.features.forEach((feature) => {
-      const data = regionData[feature.properties.region_id];
+      const obj = regionData[feature.properties.region_id];
       mp.append("path")
         .datum(feature)
-        .style("fill", data.fill)
+        .style("fill", obj.fill)
         .style("stroke-width", "0.33")
         .style("stroke", "#fff")
         .attr("d", path)
         .on("click", () => {
-          location.href = data.link;
+          location.href = obj.link;
         })
         .append("title")
-        .text(data.tooltip);
+        .text(obj.tooltip);
     });
   }
 
-  onDataLoad.push(initMapSection);
+  onDataLoad.push(renderSelectedMap);
 </script>
