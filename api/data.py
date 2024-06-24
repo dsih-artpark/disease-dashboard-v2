@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import json
 import os
 
 from flask import Blueprint, abort, request
@@ -66,6 +67,15 @@ def query():
 
     if "reports" in requested_aggregates:
         result["reports"] = _reports()
+
+    if "subregions_geojson" in requested_aggregates:
+        filepath = "/".join(["source_files", "geojsons", "subregions", region_id]) + ".geojson"
+        try:
+            with open(filepath) as f:
+                result["subregions_geojson"] = json.loads(f.read())
+                f.close()
+        except:
+            pass
 
     return result
 
