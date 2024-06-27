@@ -17,6 +17,12 @@ def _delete_source(source):
     source.delete()
 
 
+print("\n\nCHECKING IF ANY EXISTING SOURCES HAVE BEEN DELETED")
+for source in SourceFile.objects():
+    if not os.path.exists(source.name):
+        print(source.name, "not present in source_files/")
+        _delete_source(source)
+
 for t in DATA_TYPES:
     dir = SOURCE_DIR + t + "/"
     for filepath in glob.iglob(dir + "**/*.csv", recursive=True):
@@ -41,9 +47,3 @@ for t in DATA_TYPES:
                 data_type = t,
                 import_errors = import_errors,
             ).save()
-
-print("\n\nCHECKING IF ANY EXISTING SOURCES HAVE BEEN DELETED")
-for source in SourceFile.objects():
-    if not os.path.exists(source.name):
-        print(source.name, "not present in source_files/")
-        _delete_source(source)
