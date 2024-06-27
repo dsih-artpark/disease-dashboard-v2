@@ -7,6 +7,8 @@
 ## Known Pending Items
 
 - Compress the Maps
+- Auto S3 Sync
+- Downloads Reports' Icons
 - Keyboard Navigation in Location Search Results
 - Admin Panel
 - Handle Village / Ward Pages Properly
@@ -15,8 +17,6 @@
 - Trends Chart: Drop dotted lines to Axes
 - Hide Predictions When Not Available or Access Not Allowed
 - Downloads Access Control
-- Downloads Reports' Icons
-- Auto S3 Sync
 - Mobile Friendly
 - Make Disease Stage Agnostic
 - Check Performance with WSGI
