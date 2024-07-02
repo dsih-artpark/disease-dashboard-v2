@@ -6,6 +6,7 @@ from googleapiclient.discovery import build as google_build
 import google_auth_oauthlib.flow
 
 from api.data import bp as data_api_blueprint
+from api.user_management import bp as user_management_api_blueprint
 import config
 from models import CaseEntry, Region, User
 import region_search
@@ -14,6 +15,7 @@ from tenants import get_tenant_for_domain
 app = Flask(__name__, template_folder="templates")
 app.secret_key = config.FLASK_SECRET_KEY
 app.register_blueprint(data_api_blueprint, url_prefix="/api/data")
+app.register_blueprint(user_management_api_blueprint, url_prefix="/api/users")
 CSRFProtect(app)
 
 region_search.init()
@@ -41,6 +43,10 @@ def request_preprocessor():
 @app.route("/")
 def index():
     return redirect("/region/" + request.tenant.scope_region)
+
+@app.route("/admin")
+def admin():
+    return render_template("admin.html", tenant=request.tenant)
 
 @app.route("/region/<region_id>")
 def dashboard_page(region_id):

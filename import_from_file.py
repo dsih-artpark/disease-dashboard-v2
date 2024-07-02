@@ -90,7 +90,7 @@ def predictions(filename):
             obj.source_filename = filename
             obj.prediction = float(row["prediction"])
             obj.prediction_zone = int(str(row["predictionZone"]).split(".")[0])
-            obj.threshold_method = row["thresholdMethod"]
+            obj.threshold_method = row.get("thresholdMethod", "")
             obj.save()
         except Exception as e:
             error = traceback.format_exc()

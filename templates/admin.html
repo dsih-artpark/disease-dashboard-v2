@@ -1,0 +1,210 @@
+<!doctype html>
+<html>
+  <head>
+    <title>{{tenant.dashboard_title}}</title>
+    <link
+      rel="shortcut icon"
+      href="/static/tenant_logos/{{tenant.tenant_id}}.png"
+    />
+
+    {% include("components/common_head.html") %}
+    <style>
+      {% include("components/common_style.css") %}
+
+      h1 {
+        text-align: center;
+      }
+
+      h2 {
+        margin-bottom: 1rem;
+      }
+
+      main {
+        padding: 5rem max(2rem, calc(50vw - 480px));
+      }
+
+      section {
+        box-shadow: 0px 0px 2px 0px rgba(0, 0, 0, 0.08), 0px 1px 4px 0px rgba(69, 75, 87, 0.12), 0px 0px 0px 1px rgba(152, 161, 178, 0.10);
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        background: var(--bg2);
+        margin-top: 1rem;
+      }
+
+      table {
+        width: 100%;
+        text-align: left;
+        border-collapse: collapse;
+      }
+
+      th {
+        padding: 0.5rem;
+        background: var(--bg3);
+      }
+
+      td {
+        padding: 0.5rem;
+        border-top: 1px solid var(--d1);
+      }
+
+      tr:hover td {
+        background: var(--bg-tinted);
+      }
+
+      button {
+        outline: none;
+        border: none;
+        background: var(--interactive);
+        color: var(--bg2);
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        cursor: pointer;
+      }
+
+      button.red {
+        background-color: var(--interactive-danger);
+      }
+
+      form {
+        margin-top: 2rem;
+        border-top: 1px solid var(--d1);
+        padding: 0.5rem 0;
+      }
+
+      label {
+        display: grid;
+        gap: 0.25rem;
+        margin: 1rem 0;
+      }
+
+      input {
+        outline: none;
+        border: none;
+        border-bottom: 1px solid var(--d1);
+      }
+
+      input:focus {
+        border-bottom: 1px solid var(--interactive);
+        color: var(--interactive);
+      }
+    </style>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script>
+      const csrfToken = "{{csrf_token()}}";
+      async function loadUserList() {
+        const response = await fetch("/api/users/list");
+        if (response.status == 401) {
+          d3.select("#user-module").style("display", "none");
+        }
+        const data = await response.json();
+        if (!data.users) return;
+
+        const tbody = d3.select("#user-table-body");
+        tbody.text("");
+        data.users.forEach((user) => {
+          const tr = tbody.append("tr");
+          tr.append("td").text(user.user_id);
+          tr.append("td").text(user.name);
+          tr.append("td").text(user.home_region);
+          tr.append("td").text(user.permissions.join(", "));
+          const actionTd = tr.append("td");
+          if (!user.permissions.includes("user_management")) {
+            actionTd
+              .append("button")
+              .attr("class", "red")
+              .text("delete")
+              .on("click", () => {
+                const confirmation = window.confirm(
+                  `Are you sure you want to delete ${user.user_id}?`,
+                );
+                if (confirmation) {
+                  deleteUser(user.user_id);
+                }
+              });
+          }
+        });
+      }
+
+      async function deleteUser(user_id) {
+        const response = await fetch("/api/users/delete_user", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken,
+          },
+          body: JSON.stringify({
+            user_id: user_id,
+          }),
+        });
+        alert((await response.json()).message);
+
+        await loadUserList();
+      }
+
+      async function addUserFromForm(event) {
+        event.preventDefault();
+        const user = {
+          user_id: d3.select("input[name=email]").node().value,
+          name: d3.select("input[name=name]").node().value,
+          home_region: d3.select("input[name=home_region]").node().value,
+        };
+
+        const response = await fetch("/api/users/add_user", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken,
+          },
+          body: JSON.stringify(user),
+        });
+        alert((await response.json()).message);
+
+        await loadUserList();
+        d3.select("input[name=email]").node().value = "";
+        d3.select("input[name=name]").node().value = "";
+        d3.select("input[name=home_region]").node().value = "";
+      }
+
+      window.addEventListener("load", async () => {
+        await loadUserList();
+      });
+    </script>
+  </head>
+  <body>
+    <main>
+      <h1>Admin Panel</h1>
+      <section id="user-module">
+        <h2>Users</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Name</th>
+              <th>Home Region</th>
+              <th>Permissions</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="user-table-body"></tbody>
+        </table>
+        <form onsubmit="return addUserFromForm(event);" action="">
+          <h3>Add New User</h3>
+          <label>
+            <small>Name</small>
+            <input type="text" name="name" required />
+          </label>
+          <label>
+            <small>Email ID (Gmail / Google Workspace)</small>
+            <input type="text" name="email" required />
+          </label>
+          <label>
+            <small>Home Region</small>
+            <input type="text" name="home_region" required />
+          </label>
+          <button>Add</button>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>

@@ -9,7 +9,7 @@ DATA_TYPES = ("case_data", "predictions")
 SOURCE_DIR = "source_files/"
 
 def _delete_source(source):
-    print("Deleting", source.name)
+    print("\nDeleting", source.name)
     if source.data_type=="case_data":
         CaseEntry.objects(source_filename=source.name).delete()
     elif source.data_type=="predictions":
