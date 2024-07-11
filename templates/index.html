@@ -50,9 +50,9 @@
       let regionMap;
 
       const datePresets = [];
-      const latestDate = "2024-04-25"; //"{{latest_date}}";
+      const latestDate = dateObjToStr(new Date()); //"{{latest_date}}";
       function computeDatePresets() {
-        let today = new Date(latestDate);
+        let today = new Date();
 
         const thisMonthStartDate = new Date(
           today.getFullYear(),
