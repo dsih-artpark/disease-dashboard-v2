@@ -52,7 +52,7 @@
       const datePresets = [];
       const latestDate = "{{latest_date}}";
       function computeDatePresets() {
-        let today = new Date();
+        let today = new Date(latestDate);
 
         const thisMonthStartDate = new Date(
           today.getFullYear(),
