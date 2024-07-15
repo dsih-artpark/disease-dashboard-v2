@@ -234,7 +234,7 @@
       <div>
         <h3>Presets</h3>
         <button onclick="applyDatePreset(0)">
-          <b>This Month</b>
+          <b>Month till Date</b>
           <span class="this-month-name"></span>
         </button>
         <button onclick="applyDatePreset(1)">
@@ -242,7 +242,7 @@
           <span class="last-month-name"></span>
         </button>
         <button onclick="applyDatePreset(2)">
-          <b>This Year</b>
+          <b>Year till Date</b>
           <span class="this-year-name"></span>
         </button>
         <button onclick="applyDatePreset(3)">
@@ -286,6 +286,8 @@
       dateSettings.startDate = datePresets[i].startDate;
       dateSettings.endDate = datePresets[i].endDate;
       dateSettings.periodName = datePresets[i].periodName;
+      dateSettings.presetIndex = i;
+      sessionStorage.setItem("selected-date", JSON.stringify(dateSettings));
       await loadData();
       d3.select("#date-picker-dropdown-control").node().checked = false;
     }
@@ -302,6 +304,8 @@
           dateSettings.startDate = dateObjToStr(startDateObj);
           dateSettings.endDate = dateObjToStr(endDateObj);
           dateSettings.periodName = `${startDateObj.toLocaleDateString()} to ${endDateObj.toLocaleDateString()}`;
+          dateSettings.presetIndex = null;
+          sessionStorage.setItem("selected-date", JSON.stringify(dateSettings));
           await loadData();
           d3.select("#date-picker-dropdown-control").node().checked = false;
         }

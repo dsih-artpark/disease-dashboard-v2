@@ -2,8 +2,10 @@
   .component-card.map {
     grid-area: map;
     display: grid;
-    grid-template-rows: auto auto;
-    grid-gap: 0.75rem;
+    grid-template-rows: auto 1fr;
+    gap: 1.5rem;
+    height: 100%;
+    max-height: 100%;
   }
 
   .component-card.map > nav {
@@ -12,20 +14,26 @@
     width: 100%;
   }
 
-  .component-card.map > div {
-    display: grid;
-    grid-template-rows: auto auto;
-    grid-gap: 0.5rem;
+  .component-card.map > nav .tabset {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  #region-map {
+    display: inline-grid;
+    grid-template-rows: 1fr auto;
+    gap: 1.5rem;
+    height: 100%;
+    align-content: stretch;
+    justify-content: center;
   }
 
   .component-card.map h4 {
-    font-size: 0.8rem;
+    font-size: 0.7rem;
   }
 
   svg.map {
-    height: 50vh;
-    width: 50vh;
     justify-self: center;
+    height: 100%;
   }
 
   .component-card.map .scale {
@@ -113,7 +121,6 @@
   </div>
 </div>
 <script>
-  let regionMap;
   async function renderSelectedMap() {
     if (!regionMap) {
       // load map only if not previously loaded
@@ -217,12 +224,19 @@
       div.append("span").text(scale[i][1]);
     }
 
-    const projection = d3.geoMercator().fitSize([100, 100], regionMap);
+    // map needs "rewinding" because of d3 shenanigans
+    // do this only for d3 rendering
+    const rewoundMap = turf.rewind(Object.assign({}, regionMap), {
+      reverse: true,
+      mutate: true,
+    });
+
+    const projection = d3.geoMercator().fitSize([100, 100], rewoundMap);
     const path = d3.geoPath().projection(projection);
     const mp = d3.select("#region-map svg");
     mp.text("");
 
-    regionMap.features.forEach((feature) => {
+    rewoundMap.features.forEach((feature) => {
       const obj = regionData[feature.properties.region_id];
       mp.append("path")
         .datum(feature)

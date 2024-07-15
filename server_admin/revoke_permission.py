@@ -11,3 +11,4 @@ if permission in user.permissions:
     user.permissions.remove(permission)
     user.permissions.sort()
 user.save()
+print("removed, new permissions list is:", user.permissions)

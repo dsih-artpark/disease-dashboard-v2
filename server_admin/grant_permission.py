@@ -11,3 +11,4 @@ if permission not in user.permissions:
     user.permissions.append(permission)
     user.permissions.sort()
 user.save()
+print("Granted, new permission list is:", user.permissions)

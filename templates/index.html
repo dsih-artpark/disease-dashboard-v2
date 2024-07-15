@@ -14,8 +14,8 @@
       main {
         display: grid;
         grid-gap: 1rem;
-        grid-template-columns: 75vh 1fr 75vh;
-        grid-template-rows: auto 70vh auto;
+        grid-template-columns: 4fr 3fr 3fr;
+        grid-template-rows: 5rem 20rem auto;
         grid-template-areas:
           'map summary summary'
           'map subregionwiseDistribution subregionwiseDistribution'
@@ -44,11 +44,13 @@
         startDate: "",
         endDate: "",
         periodName: "",
+        presetIndex: null,
       };
       let data;
+      let regionMap;
 
       const datePresets = [];
-      const latestDate = "2024-04-30"; //"{{latest_date}}";
+      const latestDate = "{{latest_date}}";
       function computeDatePresets() {
         let today = new Date(latestDate);
 
@@ -57,15 +59,11 @@
           today.getMonth(),
           1,
         );
-        const thisMonthEndDate = new Date(
-          today.getFullYear(),
-          today.getMonth() + 1,
-          0,
-        );
+
         datePresets.push({
           startDate: dateObjToStr(thisMonthStartDate),
-          endDate: dateObjToStr(thisMonthEndDate),
-          periodName: `${monthShortNames[thisMonthStartDate.getMonth()]} '${(thisMonthStartDate.getFullYear() % 100).toString().padStart(2, "0")}`,
+          endDate: latestDate,
+          periodName: `1-${today.getDate()} ${monthShortNames[thisMonthStartDate.getMonth()]} '${(thisMonthStartDate.getFullYear() % 100).toString().padStart(2, "0")}`,
         });
 
         const lastMonthStartDate = new Date(
@@ -85,11 +83,10 @@
         });
 
         const thisYearStartDate = new Date(today.getFullYear(), 0, 1);
-        const thisYearEndDate = new Date(today.getFullYear(), 11, 31);
         datePresets.push({
           startDate: dateObjToStr(thisYearStartDate),
-          endDate: dateObjToStr(thisYearEndDate),
-          periodName: thisYearStartDate.getFullYear().toString(),
+          endDate: latestDate,
+          periodName: `Jan 1 - ${monthShortNames[today.getMonth()]} ${today.getDate()} ${thisYearStartDate.getFullYear().toString()}`,
         });
 
         const lastYearStartDate = new Date(today.getFullYear() - 1, 0, 1);
@@ -102,6 +99,17 @@
       }
 
       async function loadData() {
+        const aggregates = [
+          "summary",
+          "subregionwise_distribution",
+          "feature_distributions",
+          "trends",
+          "predictions",
+          "reports",
+        ];
+        if (!regionMap) {
+          aggregates.push("subregions_geojson");
+        }
         const response = await fetch("/api/data/query", {
           method: "POST",
           headers: {
@@ -112,17 +120,16 @@
             region_id: regionId,
             start_date: dateSettings.startDate,
             end_date: dateSettings.endDate,
-            aggregates: [
-              "summary",
-              "subregionwise_distribution",
-              "feature_distributions",
-              "trends",
-              "predictions",
-              "reports",
-            ],
+            aggregates: aggregates,
           }),
         });
         data = await response.json();
+
+        if (data.subregions_geojson) {
+          regionMap = data.subregions_geojson;
+          delete data.subregions_geojson;
+        }
+
         onDataLoad.forEach((fn) => {
           fn(data);
         });
@@ -130,9 +137,27 @@
 
       window.addEventListener("load", () => {
         computeDatePresets();
-        dateSettings.startDate = datePresets[0].startDate;
-        dateSettings.endDate = datePresets[0].endDate;
-        dateSettings.periodName = datePresets[0].periodName;
+        const savedDateSettings = JSON.parse(
+          sessionStorage.getItem("selected-date"),
+        );
+        if (savedDateSettings && savedDateSettings.presetIndex === null) {
+          dateSettings.startDate = savedDateSettings.startDate;
+          dateSettings.endDate = savedDateSettings.endDate;
+          dateSettings.periodName = savedDateSettings.periodName;
+          d3.select("#custom-start-date").node().value = dateSettings.startDate;
+          d3.select("#custom-end-date").node().value = dateSettings.endDate;
+        } else {
+          let index = 0;
+          if (
+            savedDateSettings &&
+            typeof savedDateSettings.presetIndex == "number"
+          ) {
+            index = savedDateSettings.presetIndex;
+          }
+          dateSettings.startDate = datePresets[index].startDate;
+          dateSettings.endDate = datePresets[index].endDate;
+          dateSettings.periodName = datePresets[index].periodName;
+        }
         loadData();
       });
 
@@ -177,7 +202,9 @@
         "Dec",
       ];
     </script>
+
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
     <script src="/static/js/papaparse.min.js"></script>
   </head>
   <body>

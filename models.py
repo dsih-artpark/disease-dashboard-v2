@@ -30,6 +30,7 @@ class CaseEntry(Document):
         "collection": "cases",
         "indexes": [
             ("regions", "record_date"),
+            "source_filename"
         ]
     }
 
