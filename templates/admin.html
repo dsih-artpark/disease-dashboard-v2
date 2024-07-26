@@ -32,7 +32,7 @@
       }
 
       table {
-        width: 100%;
+        max-width: 100%;
         text-align: left;
         border-collapse: collapse;
       }
@@ -45,6 +45,10 @@
       td {
         padding: 0.5rem;
         border-top: 1px solid var(--d1);
+      }
+
+      td:nth-child(1), td:nth-child(2), td:nth-child(3), td:nth-child(4) {
+        word-break: break-all;
       }
 
       tr:hover td {
@@ -102,8 +106,9 @@
 
         const tbody = d3.select("#user-table-body");
         tbody.text("");
-        data.users.forEach((user) => {
+        data.users.forEach((user, i) => {
           const tr = tbody.append("tr");
+          tr.append("td").text(i + 1);
           tr.append("td").text(user.user_id);
           tr.append("td").text(user.name);
           tr.append("td").text(user.home_region);
@@ -179,6 +184,7 @@
         <table>
           <thead>
             <tr>
+              <th>#</th>
               <th>Email</th>
               <th>Name</th>
               <th>Home Region</th>

@@ -51,12 +51,15 @@ def admin():
 @app.route("/region/<region_id>")
 def dashboard_page(region_id):
     region = Region.objects(region_id=region_id).first()
-
-    last_case_entry = CaseEntry.objects(regions=region_id).order_by("-record_date").first()
-    last_recorded_case_date = last_case_entry.record_date.isoformat().split("T")[0]
     if not region:
         abort(404)
     else:
+        last_case_entry = CaseEntry.objects(regions=region_id).order_by("-record_date").first()
+
+        last_recorded_case_date = datetime.utcnow().isoformat().split("T")[0]
+        if last_case_entry:
+            last_recorded_case_date = last_case_entry.record_date.isoformat().split("T")[0]
+
         return render_template(
             "index.html",
             tenant = request.tenant,

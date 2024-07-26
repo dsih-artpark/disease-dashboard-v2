@@ -226,9 +226,16 @@
 
     // map needs "rewinding" because of d3 shenanigans
     // do this only for d3 rendering
-    const rewoundMap = turf.rewind(Object.assign({}, regionMap), {
-      reverse: true,
-      mutate: true,
+    const rewoundMap = { type: "FeatureCollection", features: [] };
+
+    regionMap.features.forEach((feature) => {
+      if (feature.geometry) {
+        const newFeature = turf.rewind(Object.assign({}, feature), {
+          reverse: true,
+          mutate: true,
+        });
+        rewoundMap.features.push(newFeature);
+      }
     });
 
     const projection = d3.geoMercator().fitSize([100, 100], rewoundMap);
@@ -240,7 +247,7 @@
       const obj = regionData[feature.properties.region_id];
       mp.append("path")
         .datum(feature)
-        .style("fill", obj.fill)
+        .style("fill", obj.fill || getRootCssVar("--bg-shaded"))
         .style("stroke-width", "0.33")
         .style("stroke", "#fff")
         .attr("d", path)
