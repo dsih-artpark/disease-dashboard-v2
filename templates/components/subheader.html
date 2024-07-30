@@ -7,6 +7,7 @@
     grid-template-columns: 1fr auto auto;
     gap: 1.5rem;
     align-items: center;
+    max-width: 100%;
   }
 
   #subheader .breadcrumbs {
@@ -14,11 +15,15 @@
     flex-direction: row;
     gap: 0.5rem;
     align-items: center;
+    flex-wrap: wrap;
   }
 
   #subheader .breadcrumbs a {
     color: var(--f2);
     text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   #subheader .breadcrumbs a:not(:last-child)::after {
@@ -43,8 +48,16 @@
     margin-right: 0.25rem;
   }
 
+  #subheader .date {
+    white-space: nowrap;
+  }
+
   #subheader .downloads {
     position: relative;
+  }
+
+  #subheader .downloads label {
+    white-space: nowrap;
   }
 
   #download-menu-toggle {
