@@ -160,6 +160,16 @@
     color: inherit;
   }
 
+  #date-picker .custom-date-btn {
+    font-size: inherit;
+    cursor: pointer;
+    background: none;
+    border: 1.5px solid var(--d1);
+    border-radius: 0.125rem;
+    font-weight: 600;
+    color: var(--interactive);
+  }
+
   #date-picker .popdown div > button {
     font-size: inherit;
     outline: none;
@@ -212,24 +222,17 @@
     </label>
     <label for="date-picker-dropdown-control" class="closer"> </label>
     <div class="popdown">
-      <form>
+      <form onsubmit="return applyCustomDate(event);" action="">
         <h3>Custom Date Range</h3>
         <label>
           <b>Start Date</b>
-          <input
-            type="date"
-            id="custom-start-date"
-            onchange="applyCustomDate()"
-          />
+          <input type="date" id="custom-start-date" />
         </label>
         <label>
           <b>End Date</b>
-          <input
-            type="date"
-            id="custom-end-date"
-            onchange="applyCustomDate()"
-          />
+          <input type="date" id="custom-end-date" />
         </label>
+        <button class="custom-date-btn">Set</button>
       </form>
       <div>
         <h3>Presets</h3>
@@ -292,13 +295,15 @@
       d3.select("#date-picker-dropdown-control").node().checked = false;
     }
 
-    async function applyCustomDate() {
+    async function applyCustomDate(event) {
+      event.preventDefault();
       const startDate = d3.select("#custom-start-date").node().value;
       const endDate = d3.select("#custom-end-date").node().value;
       if (startDate && endDate) {
         const startDateObj = new Date(startDate);
         const endDateObj = new Date(endDate);
         if (endDateObj <= startDateObj) {
+          alert("End Date must be after Start Date");
           return;
         } else {
           dateSettings.startDate = dateObjToStr(startDateObj);
@@ -308,7 +313,10 @@
           sessionStorage.setItem("selected-date", JSON.stringify(dateSettings));
           await loadData();
           d3.select("#date-picker-dropdown-control").node().checked = false;
+          return;
         }
+      } else {
+        alert("Start Date/End Date Missing");
       }
     }
 

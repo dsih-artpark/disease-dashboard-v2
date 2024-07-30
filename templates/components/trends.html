@@ -63,15 +63,18 @@
         return {
           label: dateStrToChartLabel(obj.date),
           value: obj[chartType],
-          dotted: false,
+          type: "recorded",
         };
       });
       if (chartType == "confirmed") {
         data.predictions.forEach((obj) => {
+          const value = Math.ceil(obj.prediction.value || 0);
+          const dv = Math.round(value * 0.1);
           points.push({
             label: dateStrToChartLabel(obj.date),
-            value: Math.ceil(obj.prediction.value || 0),
-            dotted: true,
+            value: value,
+            type: "predicted",
+            confidenceValues: [value - dv, value + dv],
           });
         });
       }
@@ -84,7 +87,7 @@
 
     const values = points.map((p) => p.value);
     const labels = points.map((p) => p.label);
-    const maxValue = Math.max(...values);
+    const maxValue = Math.ceil(Math.max(...values) * 1.1) + 20;
 
     const maxCharLength =
       maxValue < 10 ? 3 : maxValue.toLocaleString().length + 1;
@@ -119,11 +122,11 @@
       .call(xAxis);
     xG.selectAll("text")
       .attr("transform", `translate(${-dx / 2}, 0)`)
-      .style("fill", getRootCssVar("--fp"))
+      .style("fill", getRootCssVar("--f2"))
       .style("font-size", 14)
       .attr("dy", 20);
     xG.select("path")
-      .style("stroke", getRootCssVar("--fp"))
+      .style("stroke", getRootCssVar("--f2"))
       .style("stroke-width", "1.4");
 
     // y-axis
@@ -142,23 +145,100 @@
       .style("stroke", getRootCssVar("--f1"))
       .style("stroke-width", "1.4");
 
-    // plot the line
-    const line = d3
-      .line()
-      .x((p) => xScale(p.label))
-      .y((p) => yScale(p.value))
-      .curve(d3.curveLinear);
+    // draw the bars
     const plotLayer = svg.append("g");
-    for (let i = 1; i < points.length; i++) {
-      plotLayer
-        .append("path")
-        .datum(points.slice(i - 1, i + 1))
-        .attr("d", line)
-        .style("fill", "none")
-        .style("stroke", getRootCssVar("--bg-shaded-2"))
-        .style("stroke-width", 3)
-        .style("stroke-dasharray", points[i].dotted ? "4 4" : "");
+    for (let i = 0; i < points.length; i++) {
+      const padding = xScale.bandwidth() / 20;
+      const bw = xScale.bandwidth();
+      const gp = plotLayer.append("g");
+      gp.append("rect")
+        .attr("x", padding + xScale(points[i].label))
+        .attr("y", yScale(points[i].value))
+        .attr("width", bw - 2 * padding)
+        .attr("height", height - yScale(points[i].value))
+        .attr("fill", getRootCssVar("--bg-shaded-2"))
+        .style("opacity", points[i].type == "predicted" ? "0.4" : "1");
+      gp.append("text")
+        .attr("x", xScale(points[i].label) + bw / 2)
+        .attr("y", height - 8)
+        .attr("text-anchor", "middle")
+        .style("font-size", 14)
+        .attr("fill", getRootCssVar("--f2"))
+        .text(points[i].value);
+      if (points[i].confidenceValues) {
+        gp.append("line")
+          .attr("x1", bw / 2 + xScale(points[i].label))
+          .attr("y1", yScale(points[i].confidenceValues[0]))
+          .attr("x2", bw / 2 + xScale(points[i].label))
+          .attr("y2", yScale(points[i].confidenceValues[1]))
+          .attr("stroke", getRootCssVar("--f2"))
+          .attr("stroke-width", "2")
+          .attr("stroke-dasharray", "4 2");
+        gp.append("line")
+          .attr("x1", bw / 2 + xScale(points[i].label) - 6)
+          .attr("y1", yScale(points[i].confidenceValues[0]))
+          .attr("x2", bw / 2 + xScale(points[i].label) + 6)
+          .attr("y2", yScale(points[i].confidenceValues[0]))
+          .attr("stroke", getRootCssVar("--f2"))
+          .attr("stroke-width", "2");
+        gp.append("line")
+          .attr("x1", bw / 2 + xScale(points[i].label) - 6)
+          .attr("y1", yScale(points[i].confidenceValues[1]))
+          .attr("x2", bw / 2 + xScale(points[i].label) + 6)
+          .attr("y2", yScale(points[i].confidenceValues[1]))
+          .attr("stroke", getRootCssVar("--f2"))
+          .attr("stroke-width", "2");
+      }
     }
+
+    // draw label & legend
+    svg
+      .append("rect")
+      .attr("x", width - 120 - 32)
+      .attr("y", 0)
+      .attr("width", 32)
+      .attr("height", 18)
+      .attr("fill", getRootCssVar("--bg-shaded-2"));
+    svg
+      .append("text")
+      .attr("x", width - 120 - 36)
+      .attr("y", 15)
+      .attr("text-anchor", "end")
+      .style("font-size", 14)
+      .attr("fill", getRootCssVar("--f2"))
+      .text("Reported");
+    svg
+      .append("rect")
+      .attr("x", width - 32)
+      .attr("y", 0)
+      .attr("width", 32)
+      .attr("height", 18)
+      .attr("fill", getRootCssVar("--bg-shaded-2"))
+      .style("opacity", "0.4");
+    svg
+      .append("text")
+      .attr("x", width - 36)
+      .attr("y", 15)
+      .attr("text-anchor", "end")
+      .style("font-size", 14)
+      .attr("fill", getRootCssVar("--f2"))
+      .text("Predicted");
+    svg
+      .append("text")
+      .attr("x", 0)
+      .attr("y", -5)
+      .attr("text-anchor", "middle")
+      .style("font-size", 14)
+      .attr("fill", getRootCssVar("--f2"))
+      .text("Cases");
+    svg
+      .append("text")
+      .attr("x", width)
+      .attr("y", height + 23)
+      .attr("text-anchor", "middle")
+      .style("font-size", 14)
+      .attr("fill", getRootCssVar("--f2"))
+      .text("Weeks");
   }
   onDataLoad.push(renderTrendsSection);
 </script>
