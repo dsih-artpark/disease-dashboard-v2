@@ -6,6 +6,12 @@
     width: 100%;
     aspect-ratio: 16 / 7;
   }
+  .component-card.trends svg .bar-group text {
+    opacity: 0;
+  }
+  .component-card.trends svg .bar-group:hover text {
+    opacity: 1;
+  }
 </style>
 <div class="component-card trends">
   <h2>Trends</h2>
@@ -121,13 +127,32 @@
       .attr("class", "x-scale")
       .call(xAxis);
     xG.selectAll("text")
-      .attr("transform", `translate(${-dx / 2}, 0)`)
+      .attr("transform", `translate(${-dx / 2}, 5)`)
       .style("fill", getRootCssVar("--f2"))
       .style("font-size", 14)
       .attr("dy", 20);
     xG.select("path")
       .style("stroke", getRootCssVar("--f2"))
       .style("stroke-width", "1.4");
+
+    // x-axis tick marks
+    const xl = svg.append("g");
+    labels.forEach((label, i) => {
+      if (
+        (labels.length - i - 1) % parseInt(labels.length / (nLabels - 1)) ==
+          0 ||
+        labels.length <= 7
+      ) {
+        xl.attr("class", "x-ticks");
+        xl.append("line")
+          .attr("x1", xScale(label))
+          .attr("y1", height)
+          .attr("x2", xScale(label))
+          .attr("y2", height + 8)
+          .style("stroke", getRootCssVar("--f1"))
+          .style("stroke-width", "2");
+      }
+    });
 
     // y-axis
     const yScale = d3.scaleLinear().range([height, 0]).domain([0, maxValue]);
@@ -151,6 +176,14 @@
       const padding = xScale.bandwidth() / 20;
       const bw = xScale.bandwidth();
       const gp = plotLayer.append("g");
+      gp.attr("class", "bar-group");
+      gp.append("rect")
+        .attr("x", padding + xScale(points[i].label))
+        .attr("y", 0)
+        .attr("width", bw - 2 * padding)
+        .attr("height", height)
+        .attr("fill", "#fff")
+        .style("opacity", "0");
       gp.append("rect")
         .attr("x", padding + xScale(points[i].label))
         .attr("y", yScale(points[i].value))
@@ -228,15 +261,15 @@
       .attr("x", 0)
       .attr("y", -5)
       .attr("text-anchor", "middle")
-      .style("font-size", 14)
+      .style("font-size", 10)
       .attr("fill", getRootCssVar("--f2"))
       .text("Cases");
     svg
       .append("text")
       .attr("x", width)
-      .attr("y", height + 23)
+      .attr("y", height + 13)
       .attr("text-anchor", "middle")
-      .style("font-size", 14)
+      .style("font-size", 10)
       .attr("fill", getRootCssVar("--f2"))
       .text("Weeks");
   }
