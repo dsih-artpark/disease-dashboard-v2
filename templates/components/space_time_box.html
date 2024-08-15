@@ -88,6 +88,10 @@
     border-radius: 0.1rem;
   }
 
+  #location-picker h3 {
+    padding-left: 0.25rem;
+  }
+
   #location-search-input {
     grid-area: 1 / 2 / 2 / 3;
     outline: none;
@@ -116,11 +120,12 @@
     grid-gap: 0.125rem;
     color: inherit;
     text-decoration: none;
-    padding: 0.25rem 0;
+    padding: 0.25rem;
   }
 
-  #location-picker .popdown a:hover {
-    opacity: 0.8;
+  #location-picker .popdown a:hover,
+  #location-picker .popdown a.highlight {
+    background: var(--bg-shaded);
   }
 
   #location-picker .popdown a:not(:last-child) {
@@ -190,6 +195,17 @@
   #date-picker .popdown div > button:hover {
     opacity: 0.8;
   }
+
+  @media only screen and (max-width: 840px) {
+    #space-time-box {
+      grid-template-columns: 1fr;
+      grid-gap: 1rem;
+    }
+    #space-time-box .box-content {
+      width: 100%;
+      border: none;
+    }
+  }
 </style>
 <div id="space-time-box">
   <div id="location-picker">
@@ -203,7 +219,8 @@
         type="text"
         id="location-search-input"
         placeholder="Search Locations..."
-        oninput="onLocationSearch()"
+        oninput="onLocationSearch(event)"
+        onkeydown="locationBoxKeyPress(event)"
         onfocusout="closeLocationPopdown(event)"
       />
       {% include("icons/chevron_down.svg") %}
@@ -265,8 +282,11 @@
         popdown.node().classList.add("visible");
         const list = popdown.select(".results-list");
         list.text("");
-        results.forEach((result) => {
+        results.forEach((result, i) => {
           const a = list.append("a");
+          if (i == 0) {
+            a.attr("class", "highlight");
+          }
           a.attr("href", `/region/${result[0]}`);
           a.append("b").text(result[1]);
           a.append("span").text(result[0]);
@@ -276,8 +296,36 @@
       }
     }
 
+    function locationBoxKeyPress(event) {
+      if (["ArrowDown", "ArrowUp", "Enter"].includes(event.key)) {
+        console.log(event);
+        const resultLinks = document.querySelectorAll(
+          "#location-picker .popdown a",
+        );
+        for (let i = 0; i < resultLinks.length; i++) {
+          const el = resultLinks[i];
+          if (el.classList.contains("highlight")) {
+            if (event.key == "ArrowDown") {
+              el.classList.remove("highlight");
+              resultLinks[(i + 1) % resultLinks.length].classList.add(
+                "highlight",
+              );
+            } else if (event.key == "ArrowUp") {
+              el.classList.remove("highlight");
+              resultLinks[
+                (resultLinks.length + i + 1) % resultLinks.length
+              ].classList.add("highlight");
+            } else if (event.key == "Enter") {
+              el.click();
+            }
+            break;
+          }
+        }
+      }
+    }
+
     function closeLocationPopdown(event) {
-      if (event && event.relatedTarget.tagName == "A") {
+      if (event && event.relatedTarget && event.relatedTarget.tagName == "A") {
         return;
       }
       const popdown = d3.select("#location-picker .popdown");

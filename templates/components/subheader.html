@@ -129,6 +129,23 @@
   #download-menu-toggle ~ .downloads-list > a:last-child {
     border-bottom: none;
   }
+
+  @media only screen and (max-width: 840px) {
+    #subheader {
+      grid-template-columns: 1fr;
+      grid-gap: 0.5rem;
+      padding: 1.5rem;
+    }
+
+    #subheader .breadcrumbs {
+      display: none;
+    }
+
+    #download-menu-toggle ~ .downloads-list {
+      left: 0;
+      width: 100%;
+    }
+  }
 </style>
 <div id="subheader">
   <div class="breadcrumbs"></div>
@@ -170,12 +187,16 @@
     // reports
     reports = d3.select("#subheader .downloads-list");
     reports.text("");
-    data.reports.forEach((r) => {
-      reports
-        .append("a")
-        .text(r)
-        .attr("href", `/download_report/${r}`)
-        .attr("target", "_blank");
-    });
+    if (data.reports != "NOT_ALLOWED") {
+      data.reports.forEach((r) => {
+        reports
+          .append("a")
+          .text(r)
+          .attr("href", `/download_report/${r}`)
+          .attr("target", "_blank");
+      });
+    } else {
+      d3.select("label[for='download-menu-toggle']").style("display", "none");
+    }
   });
 </script>

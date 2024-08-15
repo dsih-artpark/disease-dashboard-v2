@@ -2,6 +2,9 @@
   .component-card.trends {
     grid-area: trends;
   }
+  .component-card.trends .svg-container {
+    width: 100%;
+  }
   .component-card.trends svg {
     width: 100%;
     aspect-ratio: 16 / 7;
@@ -11,6 +14,15 @@
   }
   .component-card.trends svg .bar-group:hover text {
     opacity: 1;
+  }
+
+  @media only screen and (max-width: 840px) {
+    .component-card.trends .svg-container {
+      overflow-x: scroll;
+    }
+    .component-card.trends svg {
+      min-width: 720px;
+    }
   }
 </style>
 <div class="component-card trends">
@@ -35,7 +47,9 @@
     />
     <label for="trends-tab-2">Tested</label>
   </div>
-  <svg id="trends-chart-svg"></svg>
+  <div class="svg-container">
+    <svg id="trends-chart-svg"></svg>
+  </div>
 </div>
 <script>
   function dateStrToChartLabel(date) {

@@ -60,7 +60,7 @@
 </style>
 <div class="component-card map">
   <nav>
-    <div>
+    <div id="recorded-data-tabs">
       <h4>Recorded Data</h4>
       <div class="tabset">
         <input
@@ -74,7 +74,7 @@
         <label for="map-tab-1">Confirmed</label>
       </div>
     </div>
-    <div>
+    <div id="weekwise-predictions-tabs">
       <h4>Weekwise Predictions</h4>
       <div class="tabset">
         <input
@@ -122,6 +122,12 @@
 </div>
 <script>
   async function renderSelectedMap() {
+    if (!data.predictions?.length) {
+      d3.select("#weekwise-predictions-tabs").style("display", "none");
+      d3.select("#recorded-data-tabs .tabset").style("display", "none");
+      d3.select("#recorded-data-tabs h4").text("Confirmed Cases");
+    }
+
     if (!regionMap) {
       // load map only if not previously loaded
       // happens only on page load

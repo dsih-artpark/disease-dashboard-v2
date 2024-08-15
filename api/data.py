@@ -49,7 +49,10 @@ def query():
     if "summary" in requested_aggregates:
         result["summary"] = _summary(region_id, start_date, end_date)
 
-    if "subregionwise_distribution" in requested_aggregates:
+    if all([
+        "subregionwise_distribution" in requested_aggregates,
+        region.region_type in request.tenant.splittable_region_types,
+    ]):
         result["subregionwise_distribution"] = _subregionwise_distribution(
             region, start_date, end_date,
         )
@@ -68,7 +71,10 @@ def query():
     if "reports" in requested_aggregates:
         result["reports"] = _reports()
 
-    if "subregions_geojson" in requested_aggregates:
+    if all([
+        "subregions_geojson" in requested_aggregates,
+        region.region_type in request.tenant.splittable_region_types,
+    ]):
         filepath = "/".join(["source_files", "geojsons", "subregions", region_id]) + ".geojson"
         try:
             with open(filepath) as f:
@@ -209,6 +215,10 @@ def _trends(region_id, start_date, end_date):
     return results
 
 def _predictions(parent_id, start_date, end_date):
+
+    if "predictions" not in request.user.permissions:
+        return []
+
     end_sunday = end_date + timedelta(days=6-end_date.weekday())
     prediction_dates = [
         end_sunday + timedelta(days=1),
@@ -250,4 +260,7 @@ def _predictions(parent_id, start_date, end_date):
     return results
 
 def _reports():
-    return sorted(os.listdir("source_files/reports/" + request.tenant.tenant_id))
+    if "report_download" in request.user.permissions:
+        return sorted(os.listdir("source_files/reports/" + request.tenant.tenant_id))
+    else:
+        return "NOT_ALLOWED"
