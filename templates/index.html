@@ -16,7 +16,7 @@
         display: grid;
         grid-gap: 1rem;
         grid-template-columns: 4fr 3fr 3fr;
-        grid-template-rows: 5rem 20rem auto;
+        grid-template-rows: {{grid_template_rows}};
         grid-template-areas: {{grid_template | safe}};
         padding: 1rem max(2rem, calc(50vw - 640px));
       }

@@ -72,6 +72,7 @@ def dashboard_page(region_id):
             'map subregionwiseDistribution subregionwiseDistribution'
             'trends trends featureDistributions'
         """
+        grid_template_rows = "5rem 20rem auto"
 
         if region.region_type not in request.tenant.splittable_region_types:
             components = [
@@ -83,6 +84,7 @@ def dashboard_page(region_id):
                 'summary summary featureDistributions'
                 'trends trends featureDistributions'
             """
+            grid_template_rows = "5rem auto"
 
         return render_template(
             "index.html",
@@ -90,6 +92,7 @@ def dashboard_page(region_id):
             latest_date = last_recorded_case_date,
             components = components,
             grid_template = grid_template,
+            grid_template_rows = grid_template_rows,
         )
 
 @app.route("/maps/subregions/<region_id>")
