@@ -148,6 +148,16 @@
     font-weight: 600;
     text-decoration: none;
   }
+
+  @media only screen and (max-width: 840px) {
+    header {
+      grid-template-columns: auto 1fr auto;
+    }
+
+    header #space-time-box {
+      grid-area: 2 / 1 / 3 / 4;
+    }
+  }
 </style>
 <header>
   <img class="logo" src="/static/tenant_logos/{{tenant.tenant_id}}.png" />

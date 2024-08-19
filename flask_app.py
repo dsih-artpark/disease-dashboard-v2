@@ -60,10 +60,39 @@ def dashboard_page(region_id):
         if last_case_entry:
             last_recorded_case_date = last_case_entry.record_date.isoformat().split("T")[0]
 
+        components = [
+            "summary",
+            "map",
+            "trends",
+            "feature_distributions",
+            "subregionwise_distribution",
+        ]
+        grid_template = """
+            'map summary summary'
+            'map subregionwiseDistribution subregionwiseDistribution'
+            'trends trends featureDistributions'
+        """
+        grid_template_rows = "5rem 20rem auto"
+
+        if region.region_type not in request.tenant.splittable_region_types:
+            components = [
+                "summary",
+                "feature_distributions",
+                "trends",
+            ]
+            grid_template = """
+                'summary summary featureDistributions'
+                'trends trends featureDistributions'
+            """
+            grid_template_rows = "5rem auto"
+
         return render_template(
             "index.html",
             tenant = request.tenant,
             latest_date = last_recorded_case_date,
+            components = components,
+            grid_template = grid_template,
+            grid_template_rows = grid_template_rows,
         )
 
 @app.route("/maps/subregions/<region_id>")
@@ -81,12 +110,15 @@ def subregion_map(region_id):
 
 @app.route("/download_report/<filename>")
 def download_report(filename):
-    filepath = "source_files/reports/" + request.tenant.tenant_id + "/" + filename
-    return send_file("/".join([
-        "source_files/reports",
-        request.tenant.tenant_id,
-        filename
-    ]))
+    if "report_download" in request.user.permissions:
+        filepath = "source_files/reports/" + request.tenant.tenant_id + "/" + filename
+        return send_file("/".join([
+            "source_files/reports",
+            request.tenant.tenant_id,
+            filename,
+        ]))
+    else:
+        abort(401)
 
 
 @app.route("/region_search")

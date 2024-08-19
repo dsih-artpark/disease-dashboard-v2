@@ -6,6 +6,7 @@
       rel="shortcut icon"
       href="/static/tenant_logos/{{tenant.tenant_id}}.png"
     />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     {% include("components/common_head.html") %}
     <style>
@@ -15,12 +16,8 @@
         display: grid;
         grid-gap: 1rem;
         grid-template-columns: 4fr 3fr 3fr;
-        grid-template-rows: 5rem 20rem auto;
-        grid-template-areas:
-          'map summary summary'
-          'map subregionwiseDistribution subregionwiseDistribution'
-          'trends trends featureDistributions'
-        ;
+        grid-template-rows: {{grid_template_rows}};
+        grid-template-areas: {{grid_template | safe}};
         padding: 1rem max(2rem, calc(50vw - 640px));
       }
 
@@ -34,6 +31,16 @@
 
       .component-card h2 {
         font-size: 1rem;
+      }
+
+      @media only screen and (max-width: 840px) {
+        main {
+          display: block;
+          padding: 0.5rem;
+        }
+        main>* {
+          margin-bottom: 1rem;
+        }
       }
     </style>
     <script>
@@ -212,16 +219,11 @@
     <!--  -->
     {% include("components/subheader.html") %}
     <main>
+      {% for component in components %}
       <!-- -->
-      {% include("components/map.html") %}
+      {% include("components/" + component + ".html") %}
       <!-- -->
-      {% include("components/summary.html") %}
-      <!-- -->
-      {% include("components/feature_distributions.html") %}
-      <!-- -->
-      {% include("components/subregionwise_distribution.html") %}
-      <!-- -->
-      {% include("components/trends.html") %}
+      {% endfor %}
     </main>
   </body>
 </html>
