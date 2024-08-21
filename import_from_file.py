@@ -2,7 +2,7 @@ import csv
 from datetime import datetime
 import traceback
 
-from models import CaseEntry, Prediction, Region, SourceFile
+from models import CaseEntry, Prediction, Region, SourceFile, Serotype
 
 def _read_csv(filepath):
     rows = []
@@ -96,6 +96,43 @@ def predictions(filename):
             error = traceback.format_exc()
             errors.append({"line_number": line_number, "error": error, "row": row})
 
+    return errors
+
+def serotype(filename):
+    source_exists = SourceFile.objects(name=filename).first()
+    if source_exists:
+        print("FILE ALREADY IMPORTED, SKIPPING")
+        return
+
+    rows = _read_csv(filename)
+    errors = []
+    line_number = 1
+    for row in rows:
+        line_number += 1
+        try:
+            entry = Serotype()
+
+            entry.record_id = row["metadata.recordID"]
+            date_str = row["event.test.sampleCollectionDate"].split("T")[0]
+            entry.record_date = datetime(*list(map(int, date_str.split("-"))))
+
+            entry.source_filename = filename
+
+            entry.hierarchy = row["location.admin.hierarchy"]
+            assert entry.hierarchy
+
+            entry.regions = []
+            entry.regions.append(row.get("location.admin1.ID", "admin_0"))
+            entry.regions.append(row.get("location.admin2.ID", "admin_0"))
+            entry.regions.append(row.get("location.admin3.ID", "admin_0"))
+            entry.regions.append(row.get("location.admin4.ID", "admin_0"))
+            entry.regions.append(row.get("location.admin5.ID", "admin_0"))
+
+            entry.serotype = row.get("event.test.test3.serotype", "UNKNOWN").upper()
+            entry.save()
+        except Exception as e:
+            error = traceback.format_exc()
+            errors.append({"line_number": line_number, "error": error, "row": row})
     return errors
 
 def regions(filename):

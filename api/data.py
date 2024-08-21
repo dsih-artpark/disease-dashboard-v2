@@ -5,8 +5,7 @@ import os
 from flask import Blueprint, abort, request
 from pymongo import aggregation
 
-from import_from_file import predictions
-from models import Region, CaseEntry, Prediction
+from models import Region, CaseEntry, Prediction, Serotype
 
 bp = Blueprint("data", __name__)
 
@@ -170,7 +169,24 @@ def _feature_distributions(region_id, start_date, end_date):
         "age_range": list(age_range_distribution),
         "gender": list(gender_distribution),
         "test_type": list(test_type_distribution),
+        "serotype": list(_serotype_distribution(region_id, start_date, end_date)),
     }
+
+def _serotype_distribution(region_id, start_date, end_date):
+    query = Serotype.objects(
+        regions = region_id,
+        record_date__gte = start_date,
+        record_date__lte = end_date,
+    ).only("serotype")
+
+    return query.aggregate([
+        {"$group": {
+            "_id": "$serotype",
+            "cases": {"$sum": 1}
+        }}
+    ])
+
+
 
 def _trends(region_id, start_date, end_date):
     start_monday = start_date - timedelta(days=start_date.weekday())
