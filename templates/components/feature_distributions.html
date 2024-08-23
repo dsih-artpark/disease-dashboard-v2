@@ -35,8 +35,8 @@
       id="feature-dist-tab-1"
       checked
     />
-    <label for="feature-dist-tab-1">Age</label>
-    <div id="cases-by-age_range"></div>
+    <label for="feature-dist-tab-1">Serotype</label>
+    <div id="cases-by-serotype"></div>
 
     <input
       type="radio"
@@ -44,8 +44,8 @@
       value="2"
       id="feature-dist-tab-2"
     />
-    <label for="feature-dist-tab-2">Gender</label>
-    <div id="cases-by-gender"></div>
+    <label for="feature-dist-tab-2">Age</label>
+    <div id="cases-by-age_range"></div>
 
     <input
       type="radio"
@@ -53,7 +53,16 @@
       value="3"
       id="feature-dist-tab-3"
     />
-    <label for="feature-dist-tab-3">Test Type</label>
+    <label for="feature-dist-tab-3">Gender</label>
+    <div id="cases-by-gender"></div>
+
+    <input
+      type="radio"
+      name="feature-dist-tab"
+      value="4"
+      id="feature-dist-tab-4"
+    />
+    <label for="feature-dist-tab-4">Test Type</label>
     <div id="cases-by-test_type"></div>
   </div>
 </div>
@@ -93,7 +102,7 @@
   }
 
   function renderFeatureDistributions() {
-    const keys = ["age_range", "gender", "test_type"];
+    const keys = ["age_range", "gender", "test_type", "serotype"];
     keys.forEach((key) => {
       const div = d3.select(`#cases-by-${key}`);
       div.text("");

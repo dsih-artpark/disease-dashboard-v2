@@ -34,6 +34,25 @@ class CaseEntry(Document):
         ]
     }
 
+class Serotype(Document):
+    record_id = StringField(unique=True, required=True)
+    record_date = DateTimeField(required=True)
+
+    source_filename = StringField(required=True)
+
+    hierarchy = StringField(required=True)
+    regions = ListField(StringField(), required=True)
+
+    serotype = StringField(required=True)
+
+    meta = {
+        "collection": "serotype",
+        "indexes": [
+            ("regions", "record_date"),
+            "source_filename"
+        ]
+    }
+
 class Prediction(Document):
     region_id = StringField(required=True)
     parent_id = StringField(required=True)

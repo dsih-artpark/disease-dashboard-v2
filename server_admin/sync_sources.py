@@ -5,7 +5,7 @@ import os
 import import_from_file
 from models import CaseEntry, Prediction, SourceFile
 
-DATA_TYPES = ("case_data", "predictions")
+DATA_TYPES = ("case_data", "predictions", "serotype")
 SOURCE_DIR = "source_files/"
 
 def _delete_source(source):
