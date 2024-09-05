@@ -172,6 +172,15 @@
       }
 
       window.addEventListener("load", async () => {
+        mixpanel.init("{{MIXPANEL_PROJECT_TOKEN}}", {
+          debug: true,
+          track_pageview: true,
+          persistence: "localStorage",
+        });
+
+        {% if request.user %}
+        mixpanel.identify("{{request.user.user_id}}/{{request.user.tenant_id}}");
+        {% endif %}
         await loadUserList();
       });
     </script>

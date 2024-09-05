@@ -136,6 +136,7 @@
       regionMap = await d3.json(`/maps/subregions/${regionId}`);
     }
     const mapTab = d3.select("input[name=map-tab]:checked").node().value;
+    trackEvent("Rendering Map", {map_name: mapTab});
     if (mapTab == "confirmed") {
       renderCaseMap(data.subregionwise_distribution);
     } else {

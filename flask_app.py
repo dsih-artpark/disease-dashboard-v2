@@ -20,6 +20,10 @@ CSRFProtect(app)
 
 region_search.init()
 
+@app.context_processor
+def inject_template_globals():
+    return dict(MIXPANEL_PROJECT_TOKEN=config.MIXPANEL_PROJECT_TOKEN)
+
 @app.before_request
 def request_preprocessor():
     domain = request.headers["host"]

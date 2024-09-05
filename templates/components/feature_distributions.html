@@ -33,6 +33,7 @@
       name="feature-dist-tab"
       value="1"
       id="feature-dist-tab-1"
+      onchange="onFeatureTabChanged()"
       checked
     />
     <label for="feature-dist-tab-1">Serotype</label>
@@ -43,6 +44,7 @@
       name="feature-dist-tab"
       value="2"
       id="feature-dist-tab-2"
+      onchange="onFeatureTabChanged()"
     />
     <label for="feature-dist-tab-2">Age</label>
     <div id="cases-by-age_range"></div>
@@ -52,6 +54,7 @@
       name="feature-dist-tab"
       value="3"
       id="feature-dist-tab-3"
+      onchange="onFeatureTabChanged()"
     />
     <label for="feature-dist-tab-3">Gender</label>
     <div id="cases-by-gender"></div>
@@ -61,6 +64,7 @@
       name="feature-dist-tab"
       value="4"
       id="feature-dist-tab-4"
+      onchange="onFeatureTabChanged()"
     />
     <label for="feature-dist-tab-4">Test Type</label>
     <div id="cases-by-test_type"></div>
@@ -120,7 +124,16 @@
           .attr("height", 3);
         div.append("span").text(row.cases);
       });
+      if(!rows.length) {
+        div.append("p").text("No Data Available for This Time Period");
+      }
     });
+    onFeatureTabChanged();
+  }
+
+  function onFeatureTabChanged() {
+    const featureTab = document.querySelector("input[name=feature-dist-tab]:checked + label").innerHTML;
+    trackEvent("Rendering Feature Tab", {tab_name: featureTab});
   }
   onDataLoad.push(renderFeatureDistributions);
 </script>

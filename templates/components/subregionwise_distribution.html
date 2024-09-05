@@ -251,5 +251,6 @@
     });
     const fileContent = Papa.unparse(rows);
     downloadAsFile(fileContent, "cases-table.csv");
+    trackEvent("Downloaded Table CSV");
   }
 </script>

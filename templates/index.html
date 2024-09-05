@@ -143,6 +143,17 @@
       }
 
       window.addEventListener("load", () => {
+
+        mixpanel.init("{{MIXPANEL_PROJECT_TOKEN}}", {
+          debug: true,
+          track_pageview: true,
+          persistence: "localStorage",
+        });
+
+        {% if request.user %}
+        mixpanel.identify("{{request.user.user_id}}/{{request.user.tenant_id}}");
+        {% endif %}
+
         computeDatePresets();
         const savedDateSettings = JSON.parse(
           sessionStorage.getItem("selected-date"),
@@ -208,6 +219,14 @@
         "Nov",
         "Dec",
       ];
+
+      function trackEvent(eventName, props) {
+        if(props) {
+          mixpanel.track(eventName, props);
+        } else {
+          mixpanel.track(eventName, {});
+        }
+      }
     </script>
 
     <script src="https://d3js.org/d3.v7.min.js"></script>

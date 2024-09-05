@@ -124,6 +124,7 @@
     border-bottom: 1px solid var(--d2);
     text-decoration: none;
     color: var(--interactive);
+    cursor: pointer;
   }
 
   #download-menu-toggle ~ .downloads-list > a:last-child {
@@ -192,8 +193,13 @@
         reports
           .append("a")
           .text(r)
-          .attr("href", `/download_report/${r}`)
-          .attr("target", "_blank");
+          .on("click", () => {
+            const url = `/download_report/${r}`;
+            trackEvent("Downloaded Report", { report_url: url });
+            window.open(url, "_blank");
+          });
+        //.attr("href", `/download_report/${r}`)
+        //.attr("target", "_blank");
       });
     } else {
       d3.select("label[for='download-menu-toggle']").style("display", "none");
