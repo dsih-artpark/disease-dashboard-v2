@@ -316,7 +316,7 @@
             } else if (event.key == "ArrowUp") {
               el.classList.remove("highlight");
               resultLinks[
-                (resultLinks.length + i + 1) % resultLinks.length
+                (resultLinks.length + i - 1) % resultLinks.length
               ].classList.add("highlight");
             } else if (event.key == "Enter") {
               el.click();

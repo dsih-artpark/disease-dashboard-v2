@@ -2,8 +2,8 @@
   .component-card.map {
     grid-area: map;
     display: grid;
-    grid-template-rows: auto 1fr;
-    gap: 1.5rem;
+    grid-template-rows: auto 21rem auto;
+    gap: 0.5rem;
     height: 100%;
     max-height: 100%;
   }
@@ -44,6 +44,7 @@
     gap: 0.75rem;
     align-items: center;
     justify-content: center;
+    flex-wrap: wrap;
   }
 
   .component-card.map .scale > div {
@@ -136,7 +137,7 @@
       regionMap = await d3.json(`/maps/subregions/${regionId}`);
     }
     const mapTab = d3.select("input[name=map-tab]:checked").node().value;
-    trackEvent("Rendering Map", {map_name: mapTab});
+    trackEvent("Rendering Map", { map_name: mapTab });
     if (mapTab == "confirmed") {
       renderCaseMap(data.subregionwise_distribution);
     } else {
