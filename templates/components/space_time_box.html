@@ -279,7 +279,10 @@
         const resp = await fetch(`/region_search?q=${query}`);
         const results = await resp.json();
         const popdown = d3.select("#location-picker .popdown");
-        popdown.node().classList.add("visible");
+        if (!popdown.node().classList.contains("visible")) {
+          popdown.node().classList.add("visible");
+          trackEvent("Opened Region Search Box");
+        }
         const list = popdown.select(".results-list");
         list.text("");
         results.forEach((result, i) => {
@@ -313,7 +316,7 @@
             } else if (event.key == "ArrowUp") {
               el.classList.remove("highlight");
               resultLinks[
-                (resultLinks.length + i + 1) % resultLinks.length
+                (resultLinks.length + i - 1) % resultLinks.length
               ].classList.add("highlight");
             } else if (event.key == "Enter") {
               el.click();
@@ -330,6 +333,7 @@
       }
       const popdown = d3.select("#location-picker .popdown");
       popdown.node().classList.remove("visible");
+      trackEvent("Closed Region Search Box");
       d3.select("#location-search-input").node().value = "";
     }
 
@@ -339,6 +343,7 @@
       dateSettings.periodName = datePresets[i].periodName;
       dateSettings.presetIndex = i;
       sessionStorage.setItem("selected-date", JSON.stringify(dateSettings));
+      trackEvent("Selected Preset Dates", { name: dateSettings.periodName });
       await loadData();
       d3.select("#date-picker-dropdown-control").node().checked = false;
     }
@@ -359,6 +364,9 @@
           dateSettings.periodName = `${startDateObj.toLocaleDateString()} to ${endDateObj.toLocaleDateString()}`;
           dateSettings.presetIndex = null;
           sessionStorage.setItem("selected-date", JSON.stringify(dateSettings));
+          trackEvent("Selected Custom Dates", {
+            name: dateSettings.periodName,
+          });
           await loadData();
           d3.select("#date-picker-dropdown-control").node().checked = false;
           return;

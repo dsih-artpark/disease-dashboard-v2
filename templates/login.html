@@ -28,6 +28,19 @@
         background: var(--bg2);
       }
     </style>
+    <script>
+      window.addEventListener("load", () => {
+        mixpanel.init("{{MIXPANEL_PROJECT_TOKEN}}", {
+          debug: true,
+          track_pageview: true,
+          persistence: "localStorage",
+        });
+
+        {% if request.user %}
+        mixpanel.identify("{{request.user.user_id}}/{{request.user.tenant_id}}");
+        {% endif %}
+      });
+    </script>
   </head>
   <body>
     <a href="/start-google-auth">

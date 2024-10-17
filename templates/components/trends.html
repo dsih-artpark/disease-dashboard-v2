@@ -78,6 +78,7 @@
     const svg = d3.select("#trends-chart-svg");
     svg.text("");
 
+    trackEvent("Rendering Chart", {chart_type: chartType});
     if (chartType == "confirmed" || chartType == "tested") {
       const points = data.trends.map((obj) => {
         return {

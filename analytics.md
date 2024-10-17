@@ -1,0 +1,11 @@
+## List of Tracked Events
+- Closed Region Search Box
+- Downloaded Table CSV
+- Downloaded Report
+- Opened Region Search Box
+- Page View (Automatically Tracked by Mixpanel)
+- Rendering Chart
+- Rendering Feature Tab
+- Rendering Map
+- Selected Custom Dates
+- Selected Preset Dates
