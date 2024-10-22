@@ -31,7 +31,7 @@ MIXPANEL_PROJECT_TOKEN=get from mixpanel dashboard
 - The redirect URI for a given domain, say `example.com` will be `https://example.com/google-login-redirect`. `http` may be used instead of `https` only for localhost, and only if `ENV_TYPE` is set to `dev`.
 
 #### 2.3. Configure Tenants
-A tenant class is provided under `config.py` to use as the super class to define tenants. All subclasses of `config.Tenant` which are placed inside the `tenants/` directory will be used as Tenants.
+A `Tenant` class is provided under `config.py` to use as the super class to define tenants. This file also contains the description of the configuration options available for each tenant. All subclasses of `config.Tenant` which are placed inside the `tenants/` directory will be used as Tenants. In addition to this, tenant logos need to be placed under `static/tenant_logos/`. For each tenant there needs to be a logo with the file name `<tenant_id>.png` and a favicon with the file name `<tenant_id>_favicon.png`.
 
 #### 2.4. Import Regions
 The dashboard works on the basis of hierarchical regions - which could be states, districts, villages, muncipalities, wards, etc. The dashboard can import regions from a CSV file with the following headers:
@@ -110,7 +110,9 @@ The sync process works as follows:
 - Files deleted since last sync: Rows from these files are dropped from the database.
 - Files added since last sync: All rows from these files are imported into the database.
 
-> NOTE: The sync_sources script can be run as a cron job, in conjunction with syncing the source directories with an external data storage (S3) or a data warehouse.
+> NOTE:
+> - The sync_sources script can be run as a cron job, in conjunction with syncing the source directories with an external data storage (S3) or a data warehouse.
+> - The expected data format in the CSV file is documented under `import_from_file.py`.
 
 #### 2.8. Running and Deploying
 Once the above setup is done, the server can be started for testing/development purposes as follows:
